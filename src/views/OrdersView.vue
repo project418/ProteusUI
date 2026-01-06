@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex relative overflow-hidden bg-main">
-    <main class="flex-1 flex flex-col min-w-0 transition-all duration-300 p-8">
-      <div class="flex items-center justify-between mb-8 shrink-0">
+    <main class="flex-1 flex flex-col min-w-0 transition-all duration-300 p-4 lg:p-8" :class="[selectedOrder || isCreating ? 'lg:mr-[600px]' : 'mr-0']">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 lg:mb-8 gap-4 shrink-0">
         <div class="flex items-center gap-4">
           <h1 class="text-[11px] font-bold text-txt-main uppercase tracking-[0.2em] border-l-2 border-txt-main pl-3">
             Sipariş Yönetimi
@@ -11,13 +11,13 @@
           </span>
         </div>
 
-        <div class="flex items-center gap-3">
-          <div class="relative group">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <div class="relative group flex-1 sm:flex-none">
             <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-txt-muted group-focus-within:text-txt-main transition-colors" />
-            <input v-model="searchQuery" type="text" placeholder="Hızlı ara..." class="bg-card border border-line rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none w-48 lg:w-64 transition-all focus:border-txt-main/30" />
+            <input v-model="searchQuery" type="text" placeholder="Hızlı ara..." class="w-full sm:w-48 lg:w-64 bg-card border border-line rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none transition-all focus:border-txt-main/30" />
           </div>
           <button @click="toggleCreate" class="bg-txt-main text-main px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 active:scale-95 transition-all shadow-sm">
-            Yeni Sipariş
+            Yeni
           </button>
         </div>
       </div>
@@ -47,22 +47,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { Search } from 'lucide-vue-next';
-import AppDataTable from '@/components/ui/AppDataTable.vue';
-import OrderCreatePanel from './OrderCreatePanel.vue';
-import OrderDetailPanel from './OrderDetailPanel.vue';
-import { useToastStore } from '@/stores/toast';
+import { ref, computed, onMounted, watch } from 'vue'
+import { Search } from 'lucide-vue-next'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
+import OrderCreatePanel from './OrderCreatePanel.vue'
+import OrderDetailPanel from './OrderDetailPanel.vue'
+import { useToastStore } from '@/stores/toast'
 
-const toast = useToastStore();
-const isLoading = ref(true);
-const selectedOrder = ref(null);
-const searchQuery = ref('');
-const isCreating = ref(false);
-const currentPage = ref(1);
-const itemsPerPage = 10;
-const sortKey = ref('id');
-const sortOrder = ref('asc');
+const toast = useToastStore()
+const isLoading = ref(true)
+const selectedOrder = ref(null)
+const searchQuery = ref('')
+const isCreating = ref(false)
+const currentPage = ref(1)
+const itemsPerPage = 10
+const sortKey = ref('id')
+const sortOrder = ref('asc')
 
 const orderColumns = [
   { label: 'Sipariş ID', key: 'id', sortable: true },
@@ -70,50 +70,50 @@ const orderColumns = [
   { label: 'Tarih', key: 'date', sortable: true },
   { label: 'Tutar', key: 'price', sortable: true },
   { label: 'Durum', key: 'status', sortable: false },
-];
+]
 
 const statusConfig = {
   'Completed': { dot: 'bg-emerald-500' },
   'Pending': { dot: 'bg-amber-500' },
   'Canceled': { dot: 'bg-rose-500' },
-};
+}
 
 const orders = ref([
   { id: '#9021', customer: 'John Akıncı', date: '02 Haz 2024', price: '2,400.00', status: 'Completed', items: [{ name: 'Macbook Air M2', qty: 1, price: '2400' }] },
   { id: '#8812', customer: 'Canan Işık', date: '01 Haz 2024', price: '980.50', status: 'Pending', items: [{ name: 'Magic Keyboard', qty: 2, price: '490' }] },
-]);
+])
 
 const filteredOrders = computed(() => {
-  return orders.value.filter(o => o.customer.toLowerCase().includes(searchQuery.value.toLowerCase()) || o.id.includes(searchQuery.value));
-});
+  return orders.value.filter(o => o.customer.toLowerCase().includes(searchQuery.value.toLowerCase()) || o.id.includes(searchQuery.value))
+})
 
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredOrders.value.length / itemsPerPage)));
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredOrders.value.length / itemsPerPage)))
 
 const paginatedOrders = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   return filteredOrders.value.slice(start, start + itemsPerPage);
-});
+})
 
 const toggleCreate = () => {
   selectedOrder.value = null;
   isCreating.value = !isCreating.value;
-};
+}
 
 const toggleEdit = (order) => {
   isCreating.value = false;
   selectedOrder.value = selectedOrder.value?.id === order.id ? null : order;
-};
+}
 
 const closePanels = () => {
   isCreating.value = false;
   selectedOrder.value = null;
-};
+}
 
 const handleAddNewOrder = (newRecord) => {
   orders.value.unshift(newRecord);
   isCreating.value = false;
   toast.add('Yeni sipariş başarıyla oluşturuldu', 'success');
-};
+}
 
 const handleSave = (updated) => {
   const idx = orders.value.findIndex(o => o.id === updated.id);
@@ -122,7 +122,7 @@ const handleSave = (updated) => {
     toast.add('Sipariş güncellendi', 'success');
     selectedOrder.value = null;
   }
-};
+}
 
 const handleSort = (key) => {
   sortKey.value = key;
@@ -131,11 +131,11 @@ const handleSort = (key) => {
     let modifier = sortOrder.value === 'asc' ? 1 : -1;
     return a[key] > b[key] ? 1 * modifier : -1 * modifier;
   });
-};
+}
 
-watch(searchQuery, () => { currentPage.value = 1; });
+watch(searchQuery, () => { currentPage.value = 1 });
 
 onMounted(() => {
-  setTimeout(() => { isLoading.value = false; }, 600);
-});
+  setTimeout(() => { isLoading.value = false }, 600);
+})
 </script>

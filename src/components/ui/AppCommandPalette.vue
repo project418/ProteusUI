@@ -1,46 +1,29 @@
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <div v-if="open" class="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 sm:px-6">
+      <div v-if="open" class="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] lg:pt-[15vh] px-2 sm:px-6">
         <div class="fixed inset-0 bg-main/80 backdrop-blur-md" @click="close"></div>
 
         <div class="relative w-full max-w-2xl bg-card border border-line shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200">
           <div class="flex items-center px-4 py-4 border-b border-line gap-3">
             <Search class="w-5 h-5 text-txt-muted" />
-            <input
-              ref="searchInput"
-              v-model="query"
-              type="text"
-              placeholder="Sipariş, müşteri veya ayar ara..."
-              class="flex-1 bg-transparent border-none outline-none text-base text-txt-main placeholder:text-txt-muted"
-              @keydown.esc="close"
-              @keydown.down="moveSelection(1)"
-              @keydown.up="moveSelection(-1)"
-              @keydown.enter="executeAction"
-            />
-            <div class="flex items-center gap-1 px-1.5 py-1 bg-side border border-line rounded text-[10px] font-bold text-txt-muted">
+            <input ref="searchInput" v-model="query" type="text" placeholder="Ara..." class="flex-1 bg-transparent border-none outline-none text-base text-txt-main placeholder:text-txt-muted" @keydown.esc="close" @keydown.down="moveSelection(1)" @keydown.up="moveSelection(-1)" @keydown.enter="executeAction" />
+            <div class="hidden sm:flex items-center gap-1 px-1.5 py-1 bg-side border border-line rounded text-[10px] font-bold text-txt-muted">
               <span>ESC</span>
             </div>
           </div>
 
-          <div class="max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
+          <div class="max-h-[50vh] lg:max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
             <div v-for="group in filteredResults" :key="group.title">
               <h3 class="px-3 py-2 text-[10px] font-bold text-txt-muted uppercase tracking-[0.2em]">
                 {{ group.title }}
               </h3>
               <div class="space-y-1">
-                <button
-                  v-for="item in group.items"
-                  :key="item.id"
-                  @mouseenter="selectedIndex = item.globalIndex"
-                  @click="runAction(item)"
-                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group"
-                  :class="selectedIndex === item.globalIndex ? 'bg-txt-main text-main' : 'hover:bg-side text-txt-main'"
-                >
-                  <component :is="item.icon" class="w-4 h-4" :class="selectedIndex === item.globalIndex ? 'text-main' : 'text-txt-muted group-hover:text-txt-main'" />
+                <button v-for="item in group.items" :key="item.id" @mouseenter="selectedIndex = item.globalIndex" @click="runAction(item)" class="w-full flex items-center gap-3 px-3 py-3 lg:py-2.5 rounded-xl transition-all text-left group" :class="selectedIndex === item.globalIndex ? 'bg-txt-main text-main' : 'hover:bg-side text-txt-main'">
+                  <component :is="item.icon" class="w-5 h-5 lg:w-4 lg:h-4" :class="selectedIndex === item.globalIndex ? 'text-main' : 'text-txt-muted group-hover:text-txt-main'" />
                   <div class="flex-1">
                     <p class="text-[13px] font-bold leading-none">{{ item.name }}</p>
-                    <p v-if="item.desc" class="text-[11px] mt-1 opacity-70">{{ item.desc }}</p>
+                    <p v-if="item.desc" class="text-[11px] mt-1.5 lg:mt-1 opacity-70">{{ item.desc }}</p>
                   </div>
                   <ChevronRight v-if="selectedIndex === item.globalIndex" class="w-3.5 h-3.5" />
                 </button>
@@ -58,11 +41,8 @@
               <div class="flex items-center gap-1.5 uppercase font-bold text-[10px]">
                 <kbd class="px-1.5 py-0.5 bg-card border border-line rounded">↓↑</kbd> Gezgin
               </div>
-              <div class="flex items-center gap-1.5 uppercase font-bold text-[10px]">
-                <kbd class="px-1.5 py-0.5 bg-card border border-line rounded">Enter</kbd> Seç
-              </div>
             </div>
-            <span class="text-[10px] font-bold uppercase tracking-widest">Catalyst Search</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Proteus Search</span>
           </footer>
         </div>
       </div>
@@ -72,37 +52,26 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { 
-  Search, SearchX, ChevronRight, User, Package, 
-  Settings, LayoutDashboard 
-} from 'lucide-vue-next';
+import { Search, SearchX, ChevronRight, User, Package, Settings, LayoutDashboard } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
-// v-model entegrasyonu
-const props = defineProps({
-  open: { type: Boolean, default: false }
-});
+const props = defineProps({ open: { type: Boolean, default: false } });
 const emit = defineEmits(['update:open']);
-
 const router = useRouter();
 const query = ref('');
 const selectedIndex = ref(0);
 const searchInput = ref(null);
 
-// Veri Seti
 const staticActions = [
-  { id: 'dash', name: 'Dashboard', desc: 'Sistem özetini görüntüle', icon: LayoutDashboard, category: 'Navigasyon', link: '/' },
-  { id: 'ord', name: 'Orders', desc: 'Tüm siparişleri yönet', icon: Package, category: 'Navigasyon', link: '/orders' },
-  { id: 'prof', name: 'Profil Ayarları', desc: 'Kendi profilini düzenle', icon: User, category: 'Hesap', link: '/profile' },
+  { id: 'dash', name: 'Kontrol Paneli', desc: 'Sistem özetini görüntüle', icon: LayoutDashboard, category: 'Navigasyon', link: '/' },
+  { id: 'ord', name: 'Siparişler', desc: 'Tüm siparişleri yönet', icon: Package, category: 'Navigasyon', link: '/orders' },
+  { id: 'prof', name: 'Profil Ayarları', desc: 'Hesabını düzenle', icon: User, category: 'Hesap', link: '/profile' },
   { id: 'sett', name: 'Sistem Ayarları', desc: 'Platformu yapılandır', icon: Settings, category: 'Hesap', link: '/settings' },
 ];
 
 const filteredResults = computed(() => {
   const q = query.value.toLowerCase();
-  const items = staticActions.filter(i => 
-    i.name.toLowerCase().includes(q) || i.desc.toLowerCase().includes(q)
-  );
-
+  const items = staticActions.filter(i => i.name.toLowerCase().includes(q) || i.desc.toLowerCase().includes(q));
   const groups = {};
   let counter = 0;
   items.forEach(item => {
@@ -110,57 +79,37 @@ const filteredResults = computed(() => {
     item.globalIndex = counter++;
     groups[item.category].push(item);
   });
-
   return Object.keys(groups).map(title => ({ title, items: groups[title] }));
 });
 
-const maxIndex = computed(() => {
-  return filteredResults.value.reduce((acc, group) => acc + group.items.length, 0) - 1;
-});
-
-const close = () => {
-  emit('update:open', false);
-  query.value = '';
-};
-
+const maxIndex = computed(() => filteredResults.value.reduce((acc, group) => acc + group.items.length, 0) - 1);
+const close = () => { emit('update:open', false); query.value = ''; };
 const moveSelection = (dir) => {
   const next = selectedIndex.value + dir;
   if (next < 0) selectedIndex.value = maxIndex.value;
   else if (next > maxIndex.value) selectedIndex.value = 0;
   else selectedIndex.value = next;
 };
-
-const runAction = (item) => {
-  if (item.link) router.push(item.link);
-  close();
-};
-
+const runAction = (item) => { if (item.link) router.push(item.link); close(); };
 const executeAction = () => {
   const allItems = filteredResults.value.flatMap(g => g.items);
   const selected = allItems.find(i => i.globalIndex === selectedIndex.value);
   if (selected) runAction(selected);
 };
-
-// Global Kısayol Dinleyicisi
-const handleKeydown = (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-    e.preventDefault();
-    emit('update:open', !props.open);
-  }
-};
-
-watch(() => props.open, (val) => {
-  if (val) {
-    selectedIndex.value = 0;
-    nextTick(() => searchInput.value?.focus());
-  }
-});
-
+const handleKeydown = (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); emit('update:open', !props.open); } };
+watch(() => props.open, (val) => { if (val) { selectedIndex.value = 0; nextTick(() => searchInput.value?.focus()); } });
 onMounted(() => window.addEventListener('keydown', handleKeydown));
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

@@ -1,5 +1,5 @@
-ProteusUI Geliştirme Rehberi (v1.0)
-Bu rehber, ProteusUI projesinde görsel tutarlılığı sağlamak ve teknik altyapıyı standartlaştırmak için uyulması gereken kuralları içerir.
+ProteusUI Geliştirme Rehberi (v1.1)
+Bu rehber, projenin görsel tutarlılığını sağlamak, teknik altyapıyı standartlaştırmak ve her ekran boyutunda kusursuz bir kullanıcı deneyimi sunmak için uyulması gereken kuralları içerir.
 
 1. UI ve Tasarım Standartları
 1.1. Tipografi ve Etiketler (Labels)
@@ -14,15 +14,13 @@ Renk: text-txt-muted.
 
 1.2. Hata Yönetimi (Validation UI)
 
-Kullanıcıya gösterilecek hata mesajları tüm bileşenlerde tutarlı bir görsel dil kullanmalıdır:
+Kullanıcıya gösterilecek hata mesajları tüm bileşenlerde tutarlı olmalıdır:
 
-Hata Mesajı: Bileşenin hemen altında, text-[10px], text-rose-500, font-bold ve uppercase formatında olmalıdır.
+Hata Mesajı: Bileşenin hemen altında, text-[10px], text-rose-500, font-bold ve uppercase formatında.
 
 Geri Bildirim: Hata durumunda giriş alanının çerçevesi border-rose-500 rengini almalıdır.
 
 1.3. Köşe Yuvarlaklığı (Border Radius) Hiyerarşisi
-
-Görsel hiyerarşiyi korumak için üç ana seviye belirlenmiştir:
 
 Level 1 (Küçük): rounded-lg (8px) - Inputlar, butonlar ve etiketler için.
 
@@ -32,7 +30,7 @@ Level 3 (Büyük): rounded-2xl (16px) - Modallar ve ana komut paleti için.
 
 1.4. Renk ve Tema Kullanımı
 
-Statik renkler yerine her zaman src/assets/main.css içinde tanımlanan tema değişkenleri kullanılmalıdır:
+Statik renkler yerine her zaman src/assets/main.css değişkenleri kullanılmalıdır:
 
 Arka Planlar: bg-main, bg-card, bg-side.
 
@@ -40,42 +38,52 @@ Arka Planlar: bg-main, bg-card, bg-side.
 
 Metinler: text-txt-main (Birincil), text-txt-muted (İkincil).
 
-2. API ve Veri Yönetimi (GraphQL & Pinia)
-2.1. Merkezi Durum Yönetimi
+2. Mobil Uyumluluk ve Responsive Standartları
+2.1. Navigasyon (Sidebar)
 
-Veriler doğrudan bileşen içerisinde tutulmamalı, her alan için (Siparişler, Kullanıcı vb.) src/stores/ altında bir Pinia store oluşturulmalıdır.
+Masaüstü: static yerleşim, genişlik w-64 veya w-20 (collapsed).
 
-2.2. Veri Çekme Stratejisi (Cache-First)
+Mobil: fixed yerleşim, -translate-x-full ile gizli başlatma.
 
-Dinamik verilerin listelendiği sayfalarda şu akış izlenmelidir:
+Etkileşim: Hamburger menü butonu ile translate-x-0 yapılarak açılmalı ve arkada backdrop-blur-sm katmanı gösterilmelidir.
 
-Hızlı Gösterim: Sayfa açıldığında Pinia store'daki mevcut veri (cache) anında gösterilir.
+2.2. Form Grid Yapısı
+
+Masaüstü: grid-cols-2 gap-x-6 gap-y-5.
+
+Mobil: grid-cols-1 gap-y-5 (Elemanların alt alta gelmesi sağlanmalıdır).
+
+Boşluklar: Sayfa padding'i mobilde p-4, masaüstünde p-8 kullanılmalıdır.
+
+2.3. Yan Paneller (Side Panels)
+
+Masaüstü: Sabit genişlik (lg:w-[600px]), içerik alanını sıkıştırabilir veya üzerine binebilir.
+
+Mobil: Tam genişlik (w-full), ekranın tamamını kaplamalıdır.
+
+Z-Index: Ana içeriğin üzerinde kalması için her zaman z-40 kullanılmalıdır.
+
+2.4. Veri Tabloları (DataTable)
+
+Tablolar mobilde overflow-x-auto ile yatay kaydırılabilir olmalıdır.
+
+Tablo içindeki thead elemanları mobilde minimum genişliğini (min-w-[700px]) korumalıdır.
+
+3. API ve Veri Yönetimi (GraphQL & Pinia)
+3.1. Merkezi Durum Yönetimi
+
+Veriler doğrudan bileşen içerisinde tutulmamalı, her alan için src/stores/ altında bir Pinia store oluşturulmalıdır.
+
+3.2. Veri Çekme Stratejisi (Cache-First)
+
+Hızlı Gösterim: Store'daki mevcut veri (cache) anında gösterilir.
 
 Arka Plan Güncelleme: onMounted aşamasında sessizce API sorgusu atılır.
 
-Senkronizasyon: API'den gelen yeni veri store'u günceller ve Vue'nun reaktifliği sayesinde UI otomatik yenilenir.
+Senkronizasyon: Yeni veri store'u günceller ve UI otomatik yenilenir.
 
-2.3. Kullanıcı Geri Bildirimi
+3.3. Kullanıcı Geri Bildirimi
 
-API işlemleri sırasında kullanıcı useToastStore aracılığıyla bilgilendirilmelidir:
+Başarılı işlemler: toast.add('Mesaj', 'success').
 
-Başarılı İşlem: toast.add('Mesaj', 'success').
-
-Hata Durumu: API'den gelen mesaj toast.add('Hata Mesajı', 'error') şeklinde gösterilmelidir.
-
-3. Sayfa ve Panel Yerleşimi
-3.1. Grid ve Boşluk Düzeni
-
-Form Grid: Formlardaki eleman dizilimi her zaman grid-cols-2 gap-x-6 gap-y-5 yapısını kullanmalıdır.
-
-Sayfa Padding: Ana içerik alanları standart p-8 boşluğunu kullanmalıdır.
-
-3.2. Yan Panel (Side Panel) Davranışı
-
-Sağdan açılan paneller (OrderDetailPanel, OrderCreatePanel) için standartlar:
-
-Pozisyon: fixed top-0 right-0 h-full w-full lg:w-[600px].
-
-Z-Index: Ana içeriğin üzerinde kalması için z-40 kullanılmalıdır.
-
-Etkileşim: Panel açıldığında arkada fixed inset-0 bg-main/40 backdrop-blur-sm z-30 özelliklerine sahip bir backdrop gösterilmelidir.
+Hata durumları: API'den gelen mesaj error tipiyle gösterilmelidir.

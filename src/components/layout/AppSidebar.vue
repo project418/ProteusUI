@@ -1,15 +1,14 @@
 <template>
-  <aside
-    :class="[sidebarStore.isCollapsed ? 'w-20' : 'w-64']"
-    class="h-screen flex flex-col border-r border-line bg-side p-2 overflow-visible transition-all duration-300 ease-in-out relative group"
-  > 
+  <div v-if="sidebarStore.isMobileOpen" @click="sidebarStore.isMobileOpen = false" class="fixed inset-0 bg-main/40 backdrop-blur-sm z-[100] lg:hidden"></div>
+
+  <aside :class="[
+    sidebarStore.isCollapsed ? 'w-20' : 'w-64',
+    sidebarStore.isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+  ]" class="fixed lg:static inset-y-0 left-0 z-[101] flex flex-col border-r border-line bg-side p-2 overflow-visible transition-all duration-300 ease-in-out">
     <div class="relative h-14 mb-6 border-b border-line">
       <AppDropdown :isCollapsed="sidebarStore.isCollapsed" position="bottom">
         <template #trigger>
-          <div 
-            :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'justify-between px-2']"
-            class="w-full flex items-center py-2 hover:bg-main/50 rounded-lg border border-transparent transition-all"
-          >
+          <div :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'justify-between px-2']" class="w-full flex items-center py-2 hover:bg-main/50 rounded-lg border border-transparent transition-all">
             <div class="flex items-center gap-2.5 min-w-0">
               <div class="w-6 h-6 shrink-0 bg-main border border-line rounded flex items-center justify-center shadow-sm">
                 <div class="w-3 h-3 border-[1.5px] border-txt-main rounded-full opacity-90"></div>
@@ -40,11 +39,7 @@
     </div>
 
     <nav class="flex-1 space-y-1 mb-8">
-      <router-link v-for="item in menuItems" :key="item.label" :to="item.path"
-        active-class="bg-main text-txt-main"
-        :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-3']"
-        class="flex items-center gap-3 py-2 rounded-lg text-sm font-medium transition-all group text-txt-muted hover:text-txt-main hover:bg-main/50"
-      >
+      <router-link v-for="item in menuItems" :key="item.label" :to="item.path" @click="sidebarStore.isMobileOpen = false" active-class="bg-main text-txt-main" :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-3']" class="flex items-center gap-3 py-2 rounded-lg text-sm font-medium transition-all group text-txt-muted hover:text-txt-main hover:bg-main/50">
         <component :is="item.icon" class="w-5 h-5 shrink-0 opacity-70 group-hover:opacity-100" />
         <span v-if="!sidebarStore.isCollapsed" class="truncate">{{ $t(item.label) }}</span>
       </router-link>
@@ -53,10 +48,7 @@
     <div class="mt-auto pt-2 border-t border-line">
       <AppDropdown :isCollapsed="sidebarStore.isCollapsed" position="top">
         <template #trigger>
-          <div 
-            :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-2']"
-            class="w-full flex items-center gap-3 py-2 hover:bg-main/50 rounded-xl transition-all group"
-          >
+          <div :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-2']" class="w-full flex items-center gap-3 py-2 hover:bg-main/50 rounded-xl transition-all group">
             <img src="https://ui-avatars.com/api/?name=Erica&background=333&color=fff" class="w-8 h-8 rounded-lg border border-line shrink-0" alt="Avatar" />
             <div v-if="!sidebarStore.isCollapsed" class="flex-1 text-left min-w-0">
               <p class="text-sm font-semibold text-txt-main truncate">Erica</p>
@@ -75,22 +67,18 @@
               <Moon class="w-3.5 h-3.5" /> Dark
             </button>
           </div>
-
           <div class="space-y-0.5 mb-2">
-            <button v-for="lang in [{id:'en', n:'English'}, {id:'tr', n:'Türkçe'}]" :key="lang.id" @click="setLanguage(lang.id)" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer" :class="[locale === lang.id ? 'bg-main text-txt-main' : 'text-txt-muted hover:bg-side']">
+            <button v-for="lang in [{ id: 'en', n: 'English' }, { id: 'tr', n: 'Türkçe' }]" :key="lang.id" @click="setLanguage(lang.id)" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer" :class="[locale === lang.id ? 'bg-main text-txt-main' : 'text-txt-muted hover:bg-side']">
               <span>{{ lang.n }}</span>
               <Check v-if="locale === lang.id" class="w-3.5 h-3.5" />
             </button>
           </div>
-
           <div class="h-px bg-line mx-1 mb-1"></div>
-          
-          <button @click="redirectToAccount" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-side rounded-lg text-xs text-txt-main cursor-pointer">
-            <UserCircle class="w-4 h-4 opacity-60" /> {{ $t('common.account') || 'My account' }}
+          <button @click="redirectToAccount(); sidebarStore.isMobileOpen = false" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-side rounded-lg text-xs text-txt-main cursor-pointer">
+            <UserCircle class="w-4 h-4 opacity-60" /> {{ $t('common.account') }}
           </button>
-          
           <button @click="close" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-red-500/10 rounded-lg text-xs text-red-500 cursor-pointer">
-            <LogOut class="w-4 h-4" /> {{ $t('auth.logout') || 'Sign out' }}
+            <LogOut class="w-4 h-4" /> {{ $t('auth.logout') }}
           </button>
         </template>
       </AppDropdown>
@@ -103,10 +91,10 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useSidebarStore } from '@/stores/sidebar';
 import { useThemeStore } from '@/stores/theme';
-import { 
-  Home, Calendar, ShoppingCart, Settings, 
-  ChevronDown, ChevronUp, UserCircle, LogOut, Sun, Moon, 
-  Check, Plus 
+import {
+  Home, Calendar, ShoppingCart, Settings,
+  ChevronDown, ChevronUp, UserCircle, LogOut, Sun, Moon,
+  Check, Plus
 } from 'lucide-vue-next';
 import AppDropdown from '@/components/ui/AppDropdown.vue';
 

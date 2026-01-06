@@ -1,34 +1,30 @@
 <template>
-  <div class="h-full bg-main p-8 overflow-y-auto custom-scrollbar transition-colors duration-500">
-    <div class="max-w-5xl mx-auto space-y-12 pb-24">
-      
-      <section class="flex flex-wrap gap-4 p-6 bg-side/10 border border-line rounded-2xl animate-in">
+  <div class="h-full bg-main p-4 lg:p-8 overflow-y-auto custom-scrollbar transition-colors duration-500">
+    <div class="max-w-5xl mx-auto space-y-8 lg:space-y-12 pb-24">
+
+      <section class="flex flex-wrap gap-3 lg:gap-4 p-4 lg:p-6 bg-side/10 border border-line rounded-2xl animate-in">
         <div class="w-full mb-2">
           <h3 class="text-[10px] font-bold text-txt-muted uppercase tracking-[0.2em]">Modal Test Alanı</h3>
         </div>
-        <button 
-          @click="showInfoModal = true" 
-          class="px-5 py-2.5 bg-card border border-line rounded-xl text-xs font-bold text-txt-main hover:bg-side transition-all flex items-center gap-2"
-        >
-          <Info class="w-4 h-4 text-blue-500" /> Standart Modal
+        <button @click="showInfoModal = true" class="flex-1 lg:flex-none px-5 py-2.5 bg-card border border-line rounded-xl text-xs font-bold text-txt-main hover:bg-side transition-all flex items-center justify-center gap-2">
+          <Info class="w-4 h-4 text-blue-500" /> Standart
         </button>
-        <button 
-          @click="showDeleteModal = true" 
-          class="px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-500/20 transition-all flex items-center gap-2"
-        >
-          <Trash2 class="w-4 h-4" /> Tehlikeli İşlem (Sil)
+        <button @click="showDeleteModal = true" class="flex-1 lg:flex-none px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-500/20 transition-all flex items-center justify-center gap-2">
+          <Trash2 class="w-4 h-4" /> Sil
         </button>
       </section>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
-        <section class="space-y-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+        <section class="space-y-8 lg:space-y-10">
           <div>
             <h3 class="text-xs font-bold text-txt-muted uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
               <User class="w-3.5 h-3.5" /> Kimlik ve İletişim
             </h3>
             <div class="space-y-5">
               <AppInput v-model="formData.name" label="Tam Ad Soyad" placeholder="Örn: John Akıncı">
-                <template #icon><User class="w-4 h-4" /></template>
+                <template #icon>
+                  <User class="w-4 h-4" />
+                </template>
               </AppInput>
               <AppInput v-model="formData.email" label="E-posta" type="email" placeholder="John@sirket.com" />
               <AppPhoneInput v-model="formData.phone" v-model:countryCode="formData.countryCode" label="Telefon Numarası" />
@@ -42,23 +38,19 @@
             <div class="space-y-5">
               <div class="grid grid-cols-2 gap-4">
                 <AppDatePicker v-model="formData.followUpDate" label="Takip Tarihi" />
-                <AppRating v-model="formData.leadScore" label="Müşteri Puanı" />
+                <AppRating v-model="formData.leadScore" label="Puan" />
               </div>
-              <AppStatusSelect 
-                v-model="formData.leadStatus" 
-                label="Lead Durumu"
-                :options="[
-                  { label: 'Yeni', value: 'new', color: 'text-blue-500' },
-                  { label: 'Sıcak', value: 'hot', color: 'text-orange-500' },
-                  { label: 'Kazanıldı', value: 'won', color: 'text-emerald-500' },
-                  { label: 'Kaybedildi', value: 'lost', color: 'text-rose-500' }
-                ]"
-              />
+              <AppStatusSelect v-model="formData.leadStatus" label="Lead Durumu" :options="[
+                { label: 'Yeni', value: 'new', color: 'text-blue-500' },
+                { label: 'Sıcak', value: 'hot', color: 'text-orange-500' },
+                { label: 'Kazanıldı', value: 'won', color: 'text-emerald-500' },
+                { label: 'Kaybedildi', value: 'lost', color: 'text-rose-500' }
+              ]" />
             </div>
           </div>
         </section>
 
-        <section class="space-y-10">
+        <section class="space-y-8 lg:space-y-10">
           <div>
             <h3 class="text-xs font-bold text-txt-muted uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
               <CreditCard class="w-3.5 h-3.5" /> Finansal Veriler
@@ -69,7 +61,7 @@
                 <AppNumberInput v-model="formData.quantity" label="Miktar" />
               </div>
               <div class="pt-2 flex justify-between items-center border-t border-line/50">
-                <span class="text-[10px] font-bold text-txt-muted uppercase tracking-widest">Hesaplanan Toplam</span>
+                <span class="text-[10px] font-bold text-txt-muted uppercase tracking-widest">Toplam</span>
                 <span class="text-xl font-bold text-txt-main tabular-nums">
                   ₺{{ (Number(formData.price) * Number(formData.quantity)).toLocaleString() }}
                 </span>
@@ -101,45 +93,31 @@
         <AppFileUpload label="Sözleşmeler ve Ekler" />
       </section>
 
-      <footer class="pt-10 border-t border-line flex justify-end items-center gap-4">
-        <p class="text-[11px] text-txt-muted italic mr-auto">Son güncelleme: {{ new Date().toLocaleTimeString() }}</p>
-        <button @click="submitShowcase" class="px-10 py-2.5 bg-txt-main text-main rounded-xl text-xs font-bold hover:opacity-90 transition-all shadow-xl">
+      <footer class="pt-10 border-t border-line flex flex-col lg:flex-row justify-end items-center gap-4">
+        <p class="text-[11px] text-txt-muted italic lg:mr-auto order-2 lg:order-1 text-center">Son güncelleme: {{ new Date().toLocaleTimeString() }}</p>
+        <button @click="submitShowcase" class="w-full lg:w-auto px-10 py-2.5 bg-txt-main text-main rounded-xl text-xs font-bold hover:opacity-90 transition-all shadow-xl order-1 lg:order-2">
           Tüm Verileri Kaydet
         </button>
       </footer>
 
-      <AppModal 
-        :show="showInfoModal" 
-        title="Sistem Bilgilendirmesi" 
-        @close="showInfoModal = false"
-      >
+      <AppModal :show="showInfoModal" title="Sistem Bilgilendirmesi" @close="showInfoModal = false">
         <div class="space-y-4">
           <p class="text-sm text-txt-main leading-relaxed">
-            Bu modal, Catalyst tasarım diline uygun olarak <strong>Teleport</strong> ve <strong>Transition</strong> kullanılarak oluşturulmuştur. 
-            Arka plan bulanıklaştırma (backdrop-blur) özelliği ile derinlik hissi sağlar.
+            Bu modal, Catalyst tasarım diline uygun olarak <strong>Teleport</strong> ve <strong>Transition</strong> kullanılarak oluşturulmuştur.
           </p>
-          <div class="p-4 bg-side rounded-xl border border-line">
-            <span class="text-[10px] font-bold text-txt-muted uppercase">İpucu</span>
-            <p class="text-xs text-txt-muted mt-1">Esc tuşuna basarak veya dışarı tıklayarak kapatabilirsiniz.</p>
-          </div>
         </div>
         <template #footer>
           <button @click="showInfoModal = false" class="px-6 py-2 bg-txt-main text-main rounded-lg text-xs font-bold hover:opacity-90">Anladım</button>
         </template>
       </AppModal>
 
-      <AppModal 
-        :show="showDeleteModal" 
-        title="Kaydı Kalıcı Olarak Sil" 
-        size="sm" 
-        @close="showDeleteModal = false"
-      >
+      <AppModal :show="showDeleteModal" title="Kaydı Kalıcı Olarak Sil" size="sm" @close="showDeleteModal = false">
         <div class="text-center py-4">
           <div class="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertTriangle class="w-6 h-6" />
           </div>
           <p class="text-sm font-bold text-txt-main">John Akıncı silinecek.</p>
-          <p class="text-xs text-txt-muted mt-2">Bu işlem geri alınamaz ve tüm ilişkili veriler kaybolur.</p>
+          <p class="text-xs text-txt-muted mt-2">Bu işlem geri alınamaz.</p>
         </div>
         <template #footer>
           <button @click="showDeleteModal = false" class="px-4 py-2 text-xs font-bold text-txt-muted">Vazgeç</button>
@@ -153,18 +131,16 @@
 
 <script setup>
 import { reactive, ref } from 'vue';
-import { 
-  User, Target, CreditCard, Settings2, FileText, 
-  Info, Trash2, AlertTriangle 
+import {
+  User, Target, CreditCard, Settings2, FileText,
+  Info, Trash2, AlertTriangle
 } from 'lucide-vue-next';
 import { useToastStore } from '@/stores/toast';
 
-// UI Bileşenleri
 import AppInput from '@/components/forms/AppInput.vue';
 import AppSelect from '@/components/forms/AppSelect.vue';
 import AppTagInput from '@/components/forms/AppTagInput.vue';
 import AppToggle from '@/components/forms/AppToggle.vue';
-//import AppCheck from '@/components/forms/AppCheck.vue';
 import AppFileUpload from '@/components/forms/AppFileUpload.vue';
 import AppCurrencyInput from '@/components/forms/AppCurrencyInput.vue';
 import AppNumberInput from '@/components/forms/AppNumberInput.vue';
@@ -172,11 +148,10 @@ import AppDatePicker from '@/components/forms/AppDatePicker.vue';
 import AppStatusSelect from '@/components/forms/AppStatusSelect.vue';
 import AppRating from '@/components/forms/AppRating.vue';
 import AppPhoneInput from '@/components/forms/AppPhoneInput.vue';
-import AppModal from '@/components/ui/AppModal.vue'; // Modal bileşeni
+import AppModal from '@/components/ui/AppModal.vue';
 
 const toast = useToastStore();
 
-// Modal States
 const showInfoModal = ref(false);
 const showDeleteModal = ref(false);
 
@@ -211,8 +186,16 @@ const handleDelete = () => {
 .animate-in {
   animation: fadeIn 0.4s ease-out;
 }
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
