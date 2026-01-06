@@ -2,7 +2,7 @@
   <div class="flex flex-col h-full bg-card overflow-hidden">
     <header class="px-6 py-4 border-b border-line flex items-center justify-between bg-side/20 shrink-0">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-txt-main/10 flex items-center justify-center text-txt-main">
+        <div class="w-8 h-8 rounded-lg bg-txt-main/10 flex items-center justify-center text-txt-main shadow-sm">
           <Package class="w-4 h-4" />
         </div>
         <div>
@@ -16,49 +16,25 @@
     </header>
 
     <nav class="flex px-6 border-b border-line bg-side/5 gap-6 shrink-0">
-      <button 
-        v-for="tab in tabs" :key="tab.id"
-        @click="activeTab = tab.id"
-        class="py-3 text-[11px] font-bold uppercase tracking-wider transition-all border-b-2 relative -bottom-[1px]"
-        :class="activeTab === tab.id ? 'border-txt-main text-txt-main' : 'border-transparent text-txt-muted hover:text-txt-main'"
-      >
+      <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" class="py-3 text-[11px] font-bold uppercase tracking-wider transition-all border-b-2 relative -bottom-[1px]" :class="activeTab === tab.id ? 'border-txt-main text-txt-main' : 'border-transparent text-txt-muted hover:text-txt-main'">
         {{ tab.label }}
       </button>
     </nav>
 
     <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
-      
       <div v-if="activeTab === 'general'" class="space-y-6 animate-in fade-in duration-300">
         <div class="grid grid-cols-2 gap-x-6 gap-y-5">
           <div v-for="field in formSchema" :key="field.key" :class="field.fullWidth ? 'col-span-2' : ''">
-            
-            <AppInput 
-              v-if="field.type === 'text'" 
-              v-model="localOrder[field.key]"
-              :label="field.label"
-            />
-            
-            <AppSelect 
-              v-else-if="field.type === 'select'" 
-              v-model="localOrder[field.key]"
-              :label="field.label"
-              :options="field.options.map(opt => ({ label: opt, value: opt }))"
-            />
 
-            <AppCurrencyInput 
-              v-else-if="field.type === 'currency'" 
-              v-model="localOrder[field.key]"
-              :label="field.label"
-              currencySymbol="$"
-            />
+            <AppInput v-if="field.type === 'text'" v-model="localOrder[field.key]" :label="field.label" />
+
+            <AppSelect v-else-if="field.type === 'select'" v-model="localOrder[field.key]" :label="field.label" :options="field.options.map(opt => ({ label: opt, value: opt }))" />
+
+            <AppCurrencyInput v-else-if="field.type === 'currency'" v-model="localOrder[field.key]" :label="field.label" currencySymbol="$" />
 
             <div v-else-if="field.type === 'textarea'" class="space-y-1.5">
               <label class="text-[10px] font-bold text-txt-muted uppercase tracking-widest ml-1">{{ field.label }}</label>
-              <textarea 
-                v-model="localOrder[field.key]" 
-                rows="4"
-                class="w-full bg-card border border-line rounded-lg px-4 py-3 text-[13px] text-txt-main focus:outline-none focus:ring-2 ring-txt-main/5 focus:border-txt-main/30 transition-all"
-              ></textarea>
+              <textarea v-model="localOrder[field.key]" rows="4" class="w-full bg-card border border-line rounded-lg px-4 py-3 text-[13px] text-txt-main focus:outline-none focus:ring-2 ring-txt-main/5 focus:border-txt-main/30 transition-all"></textarea>
             </div>
           </div>
         </div>
@@ -98,34 +74,32 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
-import { Package, X } from 'lucide-vue-next';
+import { ref, watch } from 'vue'
+import { Package, X } from 'lucide-vue-next'
+import AppInput from '@/components/forms/AppInput.vue'
+import AppSelect from '@/components/forms/AppSelect.vue'
+import AppCurrencyInput from '@/components/forms/AppCurrencyInput.vue'
 
-// UI Kit Bileşenlerini İmport Et
-import AppInput from '@/components/forms/AppInput.vue';
-import AppSelect from '@/components/forms/AppSelect.vue';
-import AppCurrencyInput from '@/components/forms/AppCurrencyInput.vue';
+const props = defineProps(['order'])
+defineEmits(['save', 'close'])
 
-const props = defineProps(['order']);
-//const emit = defineEmits(['save', 'close']);
-
-const activeTab = ref('general');
-const localOrder = ref({ ...props.order });
+const activeTab = ref('general')
+const localOrder = ref({ ...props.order })
 
 watch(() => props.order, (val) => {
-  localOrder.value = JSON.parse(JSON.stringify(val));
-}, { immediate: true });
+  localOrder.value = JSON.parse(JSON.stringify(val))
+}, { immediate: true })
 
 const tabs = [
   { id: 'general', label: 'Genel Bilgiler' },
   { id: 'items', label: 'Sipariş Kalemleri' }
-];
+]
 
 const formSchema = [
   { label: 'Müşteri', key: 'customer', type: 'text' },
   { label: 'Durum', key: 'status', type: 'select', options: ['Completed', 'Pending', 'Canceled'] },
   { label: 'Ödeme Türü', key: 'payment', type: 'select', options: ['Kredi Kartı', 'Havale', 'Nakit'] },
-  { label: 'Tutar', key: 'price', type: 'currency' }, // Currency tipine çevirdik
+  { label: 'Tutar', key: 'price', type: 'currency' },
   { label: 'Dahili Notlar', key: 'notes', type: 'textarea', fullWidth: true },
-];
+]
 </script>

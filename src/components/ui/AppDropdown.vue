@@ -5,21 +5,8 @@
     </div>
 
     <teleport to="body">
-      <transition
-        enter-active-class="transition duration-100 ease-out"
-        enter-from-class="transform scale-95 opacity-0"
-        enter-to-class="transform scale-100 opacity-100"
-        leave-active-class="transition duration-75 ease-in"
-        leave-from-class="transform scale-100 opacity-100"
-        leave-to-class="transform scale-95 opacity-0"
-      >
-        <div 
-          v-if="isOpen" 
-          @click.stop
-          v-click-outside="close"
-          :style="dropdownStyles"
-          class="fixed bg-card border border-line rounded-2xl shadow-xl p-2 z-[9999] overflow-hidden"
-        >
+      <transition enter-active-class="transition duration-100 ease-out" enter-from-class="transform scale-95 opacity-0" enter-to-class="transform scale-100 opacity-100" leave-active-class="transition duration-75 ease-in" leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0">
+        <div v-if="isOpen" @click.stop v-click-outside="close" :style="dropdownStyles" class="fixed bg-card border border-line rounded-xl shadow-xl p-2 z-[9999] overflow-hidden">
           <div ref="contentRef">
             <slot name="content" :close="close"></slot>
           </div>
@@ -58,7 +45,7 @@ const close = () => {
 
 const calculatePosition = () => {
   if (!triggerRef.value || !isOpen.value) return;
-  
+
   const rect = triggerRef.value.getBoundingClientRect();
   const viewportHeight = window.innerHeight;
   const gap = 8;
@@ -70,7 +57,7 @@ const calculatePosition = () => {
 
   if (props.isCollapsed) {
     styles.left = `${rect.right + gap}px`;
-    
+
     let topPos = rect.top;
     if (topPos + menuHeight > viewportHeight) {
       topPos = viewportHeight - menuHeight - 32;
@@ -78,7 +65,7 @@ const calculatePosition = () => {
     styles.top = `${topPos}px`;
   } else {
     styles.left = `${rect.left}px`;
-    
+
     const spaceBelow = viewportHeight - rect.bottom;
     const hasSpaceBelow = spaceBelow > menuHeight + gap;
 

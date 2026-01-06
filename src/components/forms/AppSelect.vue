@@ -3,19 +3,18 @@
     <label v-if="label" class="text-[10px] font-bold text-txt-muted uppercase tracking-widest ml-1">
       {{ label }}
     </label>
-    <select
-      :value="modelValue"
-      @change="$emit('update:modelValue', $event.target.value)"
-      class="w-full bg-card border border-line rounded-lg px-3 py-2 text-[13px] text-txt-main focus:outline-none focus:border-txt-main/30 appearance-none cursor-pointer transition-all"
-    >
-      <option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-    </select>
-    <ChevronDown class="absolute right-3 top-[34px] w-3.5 h-3.5 text-txt-muted pointer-events-none" />
+    <div class="relative">
+      <select :value="modelValue" @change="$emit('update:modelValue', $event.target.value)" class="w-full bg-card border rounded-lg pl-3 pr-10 py-2 text-[13px] text-txt-main focus:outline-none transition-all appearance-none cursor-pointer" :class="[error ? 'border-rose-500' : 'border-line focus:border-txt-main/30']">
+        <option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      </select>
+      <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-txt-muted pointer-events-none" />
+    </div>
+    <p v-if="error" class="text-[10px] text-rose-500 font-bold ml-1 uppercase">{{ error }}</p>
   </div>
 </template>
 
 <script setup>
 import { ChevronDown } from 'lucide-vue-next';
-defineProps(['modelValue', 'label', 'options']);
+defineProps(['modelValue', 'label', 'options', 'error']);
 defineEmits(['update:modelValue']);
 </script>

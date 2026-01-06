@@ -3,27 +3,24 @@
     <label v-if="label" class="text-[10px] font-bold text-txt-muted uppercase tracking-widest ml-1">
       {{ label }}
     </label>
-    <div 
-      @dragover.prevent="isDragging = true"
-      @dragleave.prevent="isDragging = false"
-      @drop.prevent="handleDrop"
-      class="relative border-2 border-dashed rounded-xl p-6 transition-all flex flex-col items-center justify-center gap-2 group cursor-pointer"
-      :class="[
-        isDragging ? 'border-txt-main bg-txt-main/5' : 'border-line hover:border-txt-main/30 bg-card/50',
-        error ? 'border-rose-500/50' : ''
-      ]"
-    >
+
+    <div @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop" class="relative border-2 border-dashed rounded-xl p-6 transition-all flex flex-col items-center justify-center gap-2 group cursor-pointer" :class="[
+      isDragging ? 'border-txt-main bg-txt-main/5' : 'border-line hover:border-txt-main/30 bg-card/50',
+      error ? 'border-rose-500/50' : ''
+    ]">
       <input type="file" class="absolute inset-0 opacity-0 cursor-pointer" @change="handleFileSelect" multiple />
-      
+
       <div class="w-10 h-10 rounded-full bg-side flex items-center justify-center text-txt-muted group-hover:scale-110 transition-transform">
         <UploadCloud class="w-5 h-5" />
       </div>
-      
+
       <div class="text-center">
         <p class="text-[12px] font-bold text-txt-main">{{ $t('forms.file.dropHere') }}</p>
         <p class="text-[10px] text-txt-muted font-medium mt-0.5">PDF, PNG, JPG ({{ $t('common.max') }}. 10MB)</p>
       </div>
     </div>
+
+    <p v-if="error" class="text-[10px] text-rose-500 font-bold ml-1 uppercase">{{ error }}</p>
 
     <div v-if="files.length > 0" class="mt-3 space-y-2">
       <div v-for="file in files" :key="file.name" class="flex items-center justify-between bg-side/50 border border-line px-3 py-2 rounded-lg">
@@ -44,6 +41,7 @@ import { ref } from 'vue';
 import { UploadCloud, FileText, X } from 'lucide-vue-next';
 
 defineProps(['label', 'error']);
+
 const files = ref([]);
 const isDragging = ref(false);
 

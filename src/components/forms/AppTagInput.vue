@@ -6,11 +6,7 @@
         <span class="text-[11px] font-bold text-txt-main">{{ tag }}</span>
         <X @click="removeTag(tag)" class="w-3 h-3 text-txt-muted hover:text-rose-500 cursor-pointer" />
       </div>
-      <input
-        @keydown.enter.prevent="addTag"
-        :placeholder="$t('forms.tag.addNew')"
-        class="flex-1 bg-transparent border-none outline-none text-[13px] text-txt-main min-w-[100px]"
-      />
+      <input @keydown.enter.prevent="addTag" :placeholder="$t('forms.tag.addNew')" class="flex-1 bg-transparent border-none outline-none text-[13px] text-txt-main min-w-[100px]" />
     </div>
   </div>
 </template>

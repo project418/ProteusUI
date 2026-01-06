@@ -2,7 +2,7 @@
   <div class="flex flex-col h-full bg-card overflow-hidden">
     <header class="px-6 py-4 border-b border-line flex items-center justify-between bg-side/20 shrink-0">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-txt-main/10 flex items-center justify-center text-txt-main">
+        <div class="w-8 h-8 rounded-lg bg-txt-main/10 flex items-center justify-center text-txt-main shadow-sm">
           <Package class="w-4 h-4" />
         </div>
         <div>
@@ -25,6 +25,7 @@
               v-model="newOrder[field.key]"
               :label="field.label"
               :placeholder="`${field.label} giriniz...`"
+              :error="errors[field.key]"
             />
             
             <AppSelect 
@@ -32,6 +33,7 @@
               v-model="newOrder[field.key]"
               :label="field.label"
               :options="field.options.map(opt => ({ label: opt, value: opt }))"
+              :error="errors[field.key]"
             />
 
             <AppCurrencyInput 
@@ -39,6 +41,7 @@
               v-model="newOrder[field.key]"
               :label="field.label"
               currencySymbol="$"
+              :error="errors[field.key]"
             />
 
             <div v-else-if="field.type === 'textarea'" class="space-y-1.5">
@@ -47,8 +50,10 @@
                 v-model="newOrder[field.key]"
                 rows="4"
                 class="w-full bg-card border border-line rounded-lg px-4 py-3 text-[13px] text-txt-main focus:outline-none focus:ring-2 ring-txt-main/5 focus:border-txt-main/30 transition-all"
+                :class="[errors[field.key] ? 'border-rose-500' : 'border-line']"
                 placeholder="İsteğe bağlı notlar..."
               ></textarea>
+              <p v-if="errors[field.key]" class="text-[10px] text-rose-500 font-bold ml-1 uppercase">{{ errors[field.key] }}</p>
             </div>
           </div>
         </div>
@@ -75,10 +80,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { Package, X, Plus } from 'lucide-vue-next';
-
-// UI Kit Bileşenleri
 import AppInput from '@/components/forms/AppInput.vue';
 import AppSelect from '@/components/forms/AppSelect.vue';
 import AppCurrencyInput from '@/components/forms/AppCurrencyInput.vue';
@@ -86,7 +89,6 @@ import AppCurrencyInput from '@/components/forms/AppCurrencyInput.vue';
 const emit = defineEmits(['create', 'close']);
 
 const newOrder = ref({
-  id: '',
   customer: '',
   status: 'Pending',
   price: '',
@@ -95,23 +97,28 @@ const newOrder = ref({
   items: []
 });
 
+const errors = reactive({});
+
 const formSchema = [
   { label: 'Müşteri Adı', key: 'customer', type: 'text' },
   { label: 'Durum', key: 'status', type: 'select', options: ['Completed', 'Pending', 'Canceled'] },
   { label: 'Ödeme Türü', key: 'payment', type: 'select', options: ['Kredi Kartı', 'Havale', 'Nakit'] },
-  { label: 'Toplam Tutar', key: 'price', type: 'currency' }, // 'text' yerine 'currency' yaptık
+  { label: 'Toplam Tutar', key: 'price', type: 'currency' },
   { label: 'Sipariş Notları', key: 'notes', type: 'textarea', fullWidth: true },
 ];
 
 const handleCreate = () => {
-  if (!newOrder.value.customer || !newOrder.value.price) {
-    // Burada daha önce kurduğumuz Toast sistemini tetikleyebilirsin
-    return;
-  }
+  errors.customer = !newOrder.value.customer ? 'Müşteri adı gereklidir' : '';
+  errors.price = !newOrder.value.price ? 'Tutar girmelisiniz' : '';
 
-  newOrder.value.id = '#ORD-' + Math.floor(1000 + Math.random() * 9000);
-  newOrder.value.date = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+  if (Object.values(errors).some(e => e)) return;
+
+  const orderData = {
+    ...newOrder.value,
+    id: '#ORD-' + Math.floor(1000 + Math.random() * 9000),
+    date: new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })
+  };
   
-  emit('create', { ...newOrder.value });
+  emit('create', orderData);
 };
 </script>
