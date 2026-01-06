@@ -1,0 +1,81 @@
+ProteusUI Geliştirme Rehberi (v1.0)
+Bu rehber, ProteusUI projesinde görsel tutarlılığı sağlamak ve teknik altyapıyı standartlaştırmak için uyulması gereken kuralları içerir.
+
+1. UI ve Tasarım Standartları
+1.1. Tipografi ve Etiketler (Labels)
+
+Tüm form girişlerinde (Input, Select, DatePicker vb.) kullanılan etiketler şu standartlara sahip olmalıdır:
+
+Format: Büyük harf (Uppercase), kalın (font-bold), geniş karakter aralığı (tracking-widest).
+
+Boyut: text-[10px].
+
+Renk: text-txt-muted.
+
+1.2. Hata Yönetimi (Validation UI)
+
+Kullanıcıya gösterilecek hata mesajları tüm bileşenlerde tutarlı bir görsel dil kullanmalıdır:
+
+Hata Mesajı: Bileşenin hemen altında, text-[10px], text-rose-500, font-bold ve uppercase formatında olmalıdır.
+
+Geri Bildirim: Hata durumunda giriş alanının çerçevesi border-rose-500 rengini almalıdır.
+
+1.3. Köşe Yuvarlaklığı (Border Radius) Hiyerarşisi
+
+Görsel hiyerarşiyi korumak için üç ana seviye belirlenmiştir:
+
+Level 1 (Küçük): rounded-lg (8px) - Inputlar, butonlar ve etiketler için.
+
+Level 2 (Orta): rounded-xl (12px) - Kartlar, yan paneller ve dropdownlar için.
+
+Level 3 (Büyük): rounded-2xl (16px) - Modallar ve ana komut paleti için.
+
+1.4. Renk ve Tema Kullanımı
+
+Statik renkler yerine her zaman src/assets/main.css içinde tanımlanan tema değişkenleri kullanılmalıdır:
+
+Arka Planlar: bg-main, bg-card, bg-side.
+
+Çerçeveler: border-line.
+
+Metinler: text-txt-main (Birincil), text-txt-muted (İkincil).
+
+2. API ve Veri Yönetimi (GraphQL & Pinia)
+2.1. Merkezi Durum Yönetimi
+
+Veriler doğrudan bileşen içerisinde tutulmamalı, her alan için (Siparişler, Kullanıcı vb.) src/stores/ altında bir Pinia store oluşturulmalıdır.
+
+2.2. Veri Çekme Stratejisi (Cache-First)
+
+Dinamik verilerin listelendiği sayfalarda şu akış izlenmelidir:
+
+Hızlı Gösterim: Sayfa açıldığında Pinia store'daki mevcut veri (cache) anında gösterilir.
+
+Arka Plan Güncelleme: onMounted aşamasında sessizce API sorgusu atılır.
+
+Senkronizasyon: API'den gelen yeni veri store'u günceller ve Vue'nun reaktifliği sayesinde UI otomatik yenilenir.
+
+2.3. Kullanıcı Geri Bildirimi
+
+API işlemleri sırasında kullanıcı useToastStore aracılığıyla bilgilendirilmelidir:
+
+Başarılı İşlem: toast.add('Mesaj', 'success').
+
+Hata Durumu: API'den gelen mesaj toast.add('Hata Mesajı', 'error') şeklinde gösterilmelidir.
+
+3. Sayfa ve Panel Yerleşimi
+3.1. Grid ve Boşluk Düzeni
+
+Form Grid: Formlardaki eleman dizilimi her zaman grid-cols-2 gap-x-6 gap-y-5 yapısını kullanmalıdır.
+
+Sayfa Padding: Ana içerik alanları standart p-8 boşluğunu kullanmalıdır.
+
+3.2. Yan Panel (Side Panel) Davranışı
+
+Sağdan açılan paneller (OrderDetailPanel, OrderCreatePanel) için standartlar:
+
+Pozisyon: fixed top-0 right-0 h-full w-full lg:w-[600px].
+
+Z-Index: Ana içeriğin üzerinde kalması için z-40 kullanılmalıdır.
+
+Etkileşim: Panel açıldığında arkada fixed inset-0 bg-main/40 backdrop-blur-sm z-30 özelliklerine sahip bir backdrop gösterilmelidir.
