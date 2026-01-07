@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex relative overflow-hidden bg-main">
-    <main class="flex-1 flex flex-col min-w-0 transition-all duration-300 p-4 lg:p-8" :class="[selectedOrder || isCreating ? 'lg:mr-[600px]' : 'mr-0']">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 lg:mb-8 gap-4 shrink-0">
+    <main class="flex-1 flex flex-col min-w-0 transition-all duration-300 p-4 lg:p-8">
+      <div class=" flex flex-col sm:flex-row sm:items-center justify-between mb-6 lg:mb-8 gap-4 shrink-0">
         <div class="flex items-center gap-4">
           <h1 class="text-[11px] font-bold text-txt-main uppercase tracking-[0.2em] border-l-2 border-txt-main pl-3">
             Sipariş Yönetimi
