@@ -5,7 +5,8 @@ import gql from 'graphql-tag'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/toast'
 
-// --- GraphQL ---
+// --- GraphQL Mutasyonları ve Sorguları ---
+
 const LOGIN_MUTATION = gql`
   mutation Login($email: String!, $password: String!) {
     auth {
@@ -19,6 +20,14 @@ const LOGIN_MUTATION = gql`
         user {
           id
           email
+          firstName
+          lastName
+          title
+          phone
+          countryCode
+          timezone
+          language
+          avatar
         }
         tenant {
           id
@@ -39,6 +48,25 @@ const REGISTER_MUTATION = gql`
           id
           email
         }
+      }
+    }
+  }
+`
+
+const UPDATE_ME_MUTATION = gql`
+  mutation UpdateMe($input: UpdateUserInput!) {
+    auth {
+      updateMe(input: $input) {
+        id
+          email
+          firstName
+          lastName
+          title
+          phone
+          countryCode
+          timezone
+          language
+          avatar
       }
     }
   }
@@ -105,6 +133,14 @@ const ME_QUERY = gql`
       me {
         id
         email
+        firstName
+        lastName
+        title
+        phone
+        countryCode
+        timezone
+        language
+        avatar
       }
       myPermissions
     }
@@ -208,6 +244,29 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateProfile(input, notify = true) {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: UPDATE_ME_MUTATION,
+        variables: { input }
+      })
+
+      const updatedUser = data.auth.updateMe
+
+      user.value = { ...user.value, ...updatedUser }
+
+      if (notify) {
+        toast.add('Profil bilgileri başarıyla güncellendi.', 'success')
+      }
+
+      return true
+    } catch (error) {
+      console.error('Update profile error:', error)
+      toast.add(error.message || 'Güncelleme başarısız.', 'error')
+      return false
+    }
+  }
+
   async function verifyMfa(code) {
     try {
       const { data } = await apolloClient.mutate({
@@ -239,6 +298,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 4. Yeni MFA Cihazı Kurulumunu Başlat
   async function createTotpDevice(deviceName = 'ProteusApp') {
     try {
       const { data } = await apolloClient.mutate({
@@ -255,6 +315,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 5. MFA Cihazını Doğrula ve Kurulumu Tamamla
   async function verifyTotpDevice(deviceName, code) {
     try {
       const { data } = await apolloClient.mutate({
@@ -286,6 +347,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 6. MFA Cihazını Kaldır
   async function removeTotpDevice(deviceName) {
     try {
       await apolloClient.mutate({
@@ -309,6 +371,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 7. Kayıtlı MFA Cihazlarını Listele
   async function fetchTotpDevices() {
     if (!token.value) return
 
@@ -325,6 +388,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 8. Oturumu Başlat
   async function initAuth() {
     if (!token.value) return
 
@@ -349,6 +413,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 9. Çıkış Yap
   async function logout() {
     try {
       if (token.value) await apolloClient.mutate({ mutation: LOGOUT_MUTATION })
@@ -400,6 +465,7 @@ export const useAuthStore = defineStore('auth', () => {
     hasMfaEnabled,
     login,
     register,
+    updateProfile,
     verifyMfa,
     createTotpDevice,
     verifyTotpDevice,

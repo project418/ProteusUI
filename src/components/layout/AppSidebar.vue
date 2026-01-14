@@ -75,17 +75,34 @@
             <UserCircle class="w-4 h-4 opacity-60" /> {{ $t('common.account') }}
           </button>
 
-          <button @click="handleLogout" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-red-500/10 rounded-lg text-xs text-red-500 cursor-pointer">
+          <button @click="openLogoutModal(); close()" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-red-500/10 rounded-lg text-xs text-red-500 cursor-pointer">
             <LogOut class="w-4 h-4" /> {{ $t('auth.logout') }}
           </button>
         </template>
       </AppDropdown>
     </div>
+
+    <AppModal :show="showLogoutModal" title="Oturumu Kapat" size="sm" @close="showLogoutModal = false">
+      <div class="text-center py-4">
+        <div class="w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <LogOut class="w-6 h-6" />
+        </div>
+        <p class="text-sm font-bold text-txt-main">Çıkış Yapılıyor</p>
+        <p class="text-xs text-txt-muted mt-2 max-w-[220px] mx-auto leading-relaxed">
+          Hesabınızdan çıkış yapmak istediğinize emin misiniz?
+        </p>
+      </div>
+      <template #footer>
+        <button @click="showLogoutModal = false" class="px-4 py-2 text-xs font-bold text-txt-muted hover:text-txt-main transition-colors">Vazgeç</button>
+        <button @click="confirmLogout" class="px-6 py-2 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors">Çıkış Yap</button>
+      </template>
+    </AppModal>
+
   </aside>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useSidebarStore } from '@/stores/sidebar';
@@ -97,12 +114,16 @@ import {
   Check,
 } from 'lucide-vue-next';
 import AppDropdown from '@/components/ui/AppDropdown.vue';
+import AppModal from '@/components/ui/AppModal.vue';
 
 const { locale } = useI18n();
 const router = useRouter();
 const sidebarStore = useSidebarStore();
 const themeStore = useThemeStore();
 const authStore = useAuthStore();
+
+// Modal State
+const showLogoutModal = ref(false);
 
 const userEmail = computed(() => authStore.user?.email || 'user@proteus.com');
 const userName = computed(() => userEmail.value.split('@')[0]);
@@ -124,7 +145,12 @@ const redirectToAccount = () => {
   router.push('/profile');
 };
 
-const handleLogout = async () => {
+const openLogoutModal = () => {
+  showLogoutModal.value = true;
+};
+
+const confirmLogout = async () => {
+  showLogoutModal.value = false;
   await authStore.logout();
 };
 </script>

@@ -6,23 +6,23 @@
         <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6">
           <div class="relative group">
             <div class="w-24 h-24 rounded-2xl bg-side border-2 border-line flex items-center justify-center overflow-hidden shadow-xl">
-              <img v-if="user.avatar" :src="user.avatar" class="w-full h-full object-cover" />
-              <User v-else class="w-10 h-10 text-txt-muted" />
+              <img :src="displayAvatar" class="w-full h-full object-cover" />
+              <div v-if="isAvatarUploading" class="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
+                <Loader2 class="w-8 h-8 text-white animate-spin" />
+              </div>
             </div>
-            <button class="absolute -bottom-2 -right-2 p-2 bg-txt-main text-main rounded-lg shadow-lg hover:scale-110 transition-transform cursor-pointer">
+
+            <button @click="showAvatarModal = true" class="absolute -bottom-2 -right-2 p-2 bg-txt-main text-main rounded-lg shadow-lg hover:scale-110 transition-transform cursor-pointer">
               <Camera class="w-4 h-4" />
             </button>
           </div>
           <div>
-            <h1 class="text-2xl font-bold text-txt-main tracking-tight">{{ user.name }}</h1>
-            <p class="text-sm text-txt-muted font-medium uppercase tracking-wider mt-1">{{ user.role }} • {{ user.department }}</p>
+            <h1 class="text-2xl font-bold text-txt-main tracking-tight">{{ displayName }}</h1>
+            <p class="text-sm text-txt-muted font-medium uppercase tracking-wider mt-1">
+              {{ profileForm.title || 'Unvan Belirtilmedi' }}
+            </p>
             <p class="text-xs text-txt-muted mt-1">{{ authStore.user?.email }}</p>
           </div>
-        </div>
-        <div class="flex w-full md:w-auto">
-          <button @click="saveProfile" class="w-full md:w-auto px-8 py-2.5 bg-txt-main text-main rounded-xl text-xs font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg">
-            Değişiklikleri Kaydet
-          </button>
         </div>
       </header>
 
@@ -40,29 +40,42 @@
             <section class="space-y-6">
               <h3 class="text-[11px] font-bold text-txt-muted uppercase tracking-[0.2em] border-l-2 border-txt-main pl-3">Temel Bilgiler</h3>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <AppInput v-model="user.firstName" label="Ad" />
-                <AppInput v-model="user.lastName" label="Soyad" />
-                <AppInput v-model="user.email" label="E-posta" class="sm:col-span-2" />
-                <AppPhoneInput v-model="user.phone" v-model:countryCode="user.countryCode" label="Telefon" class="sm:col-span-2" />
+                <AppInput v-model="profileForm.firstName" label="Ad" placeholder="Adınız" />
+                <AppInput v-model="profileForm.lastName" label="Soyad" placeholder="Soyadınız" />
+                <AppInput v-model="profileForm.title" label="Unvan" placeholder="Örn: Kıdemli Geliştirici" class="sm:col-span-2" />
+                <AppInput v-model="profileForm.email" label="E-posta" class="sm:col-span-2" placeholder="ornek@sirket.com" />
+                <AppPhoneInput v-model="profileForm.phone" v-model:countryCode="profileForm.countryCode" label="Telefon" class="sm:col-span-2" />
               </div>
             </section>
 
             <section class="space-y-6">
               <h3 class="text-[11px] font-bold text-txt-muted uppercase tracking-[0.2em] border-l-2 border-txt-main pl-3">Ayarlar</h3>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <AppSelect v-model="user.timezone" label="Zaman Dilimi" :options="timezones" />
-                <AppSelect v-model="user.language" label="Dil" :options="[{ label: 'Türkçe', value: 'tr' }, { label: 'English', value: 'en' }]" />
+                <AppSelect v-model="profileForm.timezone" label="Zaman Dilimi" :options="timezones" />
+                <AppSelect v-model="profileForm.language" label="Dil" :options="[{ label: 'Türkçe', value: 'tr' }, { label: 'English', value: 'en' }]" />
               </div>
             </section>
+
+            <div class="pt-4 border-t border-line flex justify-end">
+              <button @click="saveProfile" :disabled="isSaving" class="px-8 py-2.5 bg-txt-main text-main rounded-xl text-xs font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                <Loader2 v-if="isSaving" class="w-4 h-4 animate-spin" />
+                {{ isSaving ? 'Kaydediliyor...' : 'Profili Güncelle' }}
+              </button>
+            </div>
           </div>
 
           <div v-if="activeTab === 'security'" class="space-y-8">
-
             <section class="space-y-6">
               <h3 class="text-[11px] font-bold text-txt-muted uppercase tracking-[0.2em] border-l-2 border-txt-main pl-3">Şifre Yönetimi</h3>
               <div class="space-y-4">
-                <AppInput type="password" label="Mevcut Şifre" placeholder="••••••••" />
-                <AppInput type="password" label="Yeni Şifre" placeholder="••••••••" />
+                <AppInput v-model="passwordForm.currentPassword" type="password" label="Mevcut Şifre" placeholder="••••••••" />
+                <AppInput v-model="passwordForm.newPassword" type="password" label="Yeni Şifre" placeholder="••••••••" />
+              </div>
+              <div class="flex justify-end">
+                <button @click="updatePassword" :disabled="isPasswordSaving || !passwordForm.newPassword" class="px-6 py-2.5 bg-card border border-line text-txt-main rounded-xl text-xs font-bold hover:bg-side transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <Loader2 v-if="isPasswordSaving" class="w-3.5 h-3.5 animate-spin" />
+                  Şifreyi Değiştir
+                </button>
               </div>
             </section>
 
@@ -86,7 +99,7 @@
                 </button>
               </div>
 
-              <div v-if="setupData" class="p-6 bg-card border border-line rounded-2xl space-y-6 animate-in">
+              <div v-if="setupData" class="p-6 bg-card border border-line rounded-2xl space-y-6 animate-in slide-in-from-top-2 border-l-4 border-l-txt-main">
                 <div class="flex justify-between items-start">
                   <h4 class="text-sm font-bold text-txt-main">Yeni Cihaz Tanımlama: <span class="text-txt-muted">{{ newDeviceName }}</span></h4>
                   <button @click="setupData = null" class="text-txt-muted hover:text-rose-500 transition-colors">
@@ -120,10 +133,8 @@
                     <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" :class="device.verified ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'">
                       <ShieldCheck class="w-5 h-5" />
                     </div>
-
                     <div>
                       <h4 class="text-sm font-bold text-txt-main">{{ device.name }}</h4>
-
                       <p v-if="device.verified" class="text-[10px] text-txt-muted font-bold uppercase tracking-wider flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
                         Aktif & Doğrulandı
@@ -134,12 +145,10 @@
                       </p>
                     </div>
                   </div>
-
                   <div class="flex items-center gap-2">
                     <button v-if="!device.verified" @click="resumeMfaSetup(device.name)" class="px-3 py-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1">
                       <RefreshCw class="w-3 h-3" /> Kurulumu Tamamla
                     </button>
-
                     <button @click="askRemoveMfa(device.name)" class="p-2 text-txt-muted hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all cursor-pointer" title="Cihazı Kaldır">
                       <Trash2 class="w-4 h-4" />
                     </button>
@@ -161,6 +170,34 @@
         </div>
       </div>
     </div>
+
+    <AppModal :show="showAvatarModal" title="Profil Fotoğrafı Yükle" size="sm" @close="showAvatarModal = false">
+      <div class="space-y-6">
+        <div class="relative border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center gap-3 group cursor-pointer" :class="isDraggingAvatar ? 'border-txt-main bg-txt-main/5' : 'border-line hover:border-txt-main/30 bg-card/50'" @dragover.prevent="isDraggingAvatar = true" @dragleave.prevent="isDraggingAvatar = false" @drop.prevent="handleAvatarDrop" @click="triggerFileInput">
+          <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleFileUpload" />
+
+          <div class="w-12 h-12 rounded-full bg-side flex items-center justify-center text-txt-muted group-hover:scale-110 transition-transform">
+            <UploadCloud class="w-6 h-6" />
+          </div>
+
+          <div class="text-center space-y-1">
+            <p class="text-sm font-bold text-txt-main">Fotoğrafı buraya sürükleyin</p>
+            <p class="text-xs text-txt-muted">veya seçmek için tıklayın</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-side/50 border border-line">
+          <Info class="w-4 h-4 text-blue-500 shrink-0" />
+          <p class="text-[11px] text-txt-muted leading-tight">
+            Desteklenen formatlar: JPG, PNG. <br>
+            Maksimum dosya boyutu: <strong>1MB</strong>
+          </p>
+        </div>
+      </div>
+      <template #footer>
+        <button @click="showAvatarModal = false" class="px-4 py-2 text-xs font-bold text-txt-muted hover:text-txt-main transition-colors">Vazgeç</button>
+      </template>
+    </AppModal>
 
     <AppModal :show="showAddDeviceModal" title="Yeni Cihaz Ekle" size="sm" @close="showAddDeviceModal = false">
       <div class="space-y-4">
@@ -193,8 +230,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
-import { User, Camera, ShieldCheck, Bell, Globe, Plus, X, Trash2, RefreshCw } from 'lucide-vue-next';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
+import { User, Camera, ShieldCheck, Bell, Globe, Plus, X, Trash2, RefreshCw, Loader2, UploadCloud, Info } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import QRCode from 'qrcode';
@@ -207,6 +244,8 @@ import AppModal from '@/components/ui/AppModal.vue';
 const authStore = useAuthStore();
 const toast = useToastStore();
 const activeTab = ref('general');
+const isSaving = ref(false);
+const isPasswordSaving = ref(false);
 
 const tabs = [
   { id: 'general', label: 'Profil', icon: User },
@@ -215,29 +254,133 @@ const tabs = [
   { id: 'integrations', label: 'Bağlantılar', icon: Globe },
 ];
 
-const user = reactive({
-  firstName: 'John',
-  lastName: 'Akıncı',
-  name: 'John Akıncı',
-  email: authStore.user?.email || 'user@example.com',
-  phone: '5551234567',
-  countryCode: '+90',
-  role: 'Yönetici',
-  department: 'Geliştirme',
-  avatar: 'https://ui-avatars.com/api/?name=' + (authStore.user?.email || 'User'),
-  timezone: 'GMT+3',
-  language: 'tr',
-  twoFactor: authStore.hasMfaEnabled
-});
-
 const timezones = [
-  { label: 'Istanbul (GMT+3)', value: 'GMT+3' },
-  { label: 'London (GMT+0)', value: 'GMT+0' },
-  { label: 'New York (GMT-5)', value: 'GMT-5' }
+  { label: 'Istanbul (GMT+3)', value: 'Europe/Istanbul' },
+  { label: 'London (GMT+0)', value: 'Europe/London' },
+  { label: 'New York (GMT-5)', value: 'America/New_York' }
 ];
 
-const saveProfile = () => {
-  toast.add('Profil değişiklikleri başarıyla kaydedildi.', 'success');
+const profileForm = reactive({
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  countryCode: '+90',
+  timezone: '',
+  language: '',
+  title: '',
+  avatar: ''
+});
+
+const passwordForm = reactive({
+  currentPassword: '',
+  newPassword: ''
+});
+
+watch(() => authStore.user, (newUser) => {
+  if (newUser) {
+    profileForm.firstName = newUser.firstName || '';
+    profileForm.lastName = newUser.lastName || '';
+    profileForm.email = newUser.email || '';
+    profileForm.phone = newUser.phone || '';
+    profileForm.countryCode = newUser.countryCode || '+90';
+    profileForm.timezone = newUser.timezone || '';
+    profileForm.language = newUser.language || '';
+    profileForm.title = newUser.title || '';
+    profileForm.avatar = newUser.avatar || '';
+  }
+}, { immediate: true });
+
+const displayName = computed(() => {
+  if (profileForm.firstName && profileForm.lastName) {
+    return `${profileForm.firstName} ${profileForm.lastName}`;
+  }
+  return authStore.user?.email?.split('@')[0] || 'Kullanıcı';
+});
+
+const displayAvatar = computed(() => {
+  if (profileForm.avatar) return profileForm.avatar;
+  return `https://ui-avatars.com/api/?name=${displayName.value}&background=333&color=fff`;
+});
+
+const showAvatarModal = ref(false);
+const isDraggingAvatar = ref(false);
+const isAvatarUploading = ref(false);
+const fileInput = ref(null);
+
+const triggerFileInput = () => {
+  fileInput.value.click();
+};
+
+const handleAvatarDrop = (e) => {
+  isDraggingAvatar.value = false;
+  const file = e.dataTransfer.files[0];
+  if (file) processAvatarFile(file);
+};
+
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) processAvatarFile(file);
+};
+
+const processAvatarFile = (file) => {
+  if (!file.type.startsWith('image/')) {
+    toast.add('Lütfen geçerli bir resim dosyası seçiniz.', 'error');
+    return;
+  }
+
+  if (file.size > 1 * 1024 * 1024) {
+    toast.add('Dosya boyutu 1MB\'dan küçük olmalıdır.', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    isAvatarUploading.value = true;
+    showAvatarModal.value = false;
+
+    const base64Image = e.target.result;
+
+    const success = await authStore.updateProfile({ avatar: base64Image }, false);
+
+    if (success) {
+      profileForm.avatar = base64Image;
+      toast.add('Profil fotoğrafı başarıyla güncellendi.', 'success');
+    }
+
+    isAvatarUploading.value = false;
+  };
+  reader.readAsDataURL(file);
+};
+
+const saveProfile = async () => {
+  isSaving.value = true;
+  await authStore.updateProfile(profileForm);
+  isSaving.value = false;
+};
+
+const updatePassword = async () => {
+  if (!passwordForm.newPassword || !passwordForm.currentPassword) {
+    toast.add('Lütfen mevcut ve yeni şifrenizi giriniz.', 'warning');
+    return;
+  }
+  if (passwordForm.newPassword.length < 6) {
+    toast.add('Yeni şifre en az 6 karakter olmalıdır.', 'warning');
+    return;
+  }
+
+  isPasswordSaving.value = true;
+  const success = await authStore.updateProfile({
+    password: passwordForm.newPassword,
+    currentPassword: passwordForm.currentPassword
+  }, false);
+
+  if (success) {
+    passwordForm.currentPassword = '';
+    passwordForm.newPassword = '';
+    toast.add('Şifreniz başarıyla güncellendi.', 'success');
+  }
+  isPasswordSaving.value = false;
 };
 
 // --- MFA (2FA) ---
@@ -245,8 +388,6 @@ const setupData = ref(null);
 const qrCodeUrl = ref('');
 const verifyCode = ref('');
 const newDeviceName = ref('');
-
-// State for modals
 const showAddDeviceModal = ref(false);
 const showDeleteDeviceModal = ref(false);
 const deviceToDelete = ref(null);
@@ -258,7 +399,8 @@ onMounted(() => {
 });
 
 const openSetupModal = () => {
-  newDeviceName.value = `device-${Date.now()}`;
+  const randomSuffix = Math.floor(Math.random() * 1000);
+  newDeviceName.value = `Cihaz-${randomSuffix}`;
   showAddDeviceModal.value = true;
 };
 
@@ -272,7 +414,7 @@ const startMfaSetup = async (deviceName) => {
   const result = await authStore.createTotpDevice(deviceName);
   if (result.success) {
     setupData.value = result;
-    qrCodeUrl.value = await QRCode.toDataURL(result.qrCode, { margin: 0.5 });
+    qrCodeUrl.value = await QRCode.toDataURL(result.qrCode);
     verifyCode.value = '';
   }
 };
@@ -281,7 +423,7 @@ const completeMfaSetup = async () => {
   if (!setupData.value) return;
   const success = await authStore.verifyTotpDevice(setupData.value.deviceName, verifyCode.value);
   if (success) {
-    setupData.value = null
+    setupData.value = null;
   }
 };
 
