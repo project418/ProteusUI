@@ -5,6 +5,7 @@
     sidebarStore.isCollapsed ? 'w-20' : 'w-64',
     sidebarStore.isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
   ]" class="fixed lg:static inset-y-0 left-0 z-[101] flex flex-col border-r border-line bg-side p-2 overflow-visible transition-all duration-300 ease-in-out">
+
     <div class="relative h-14 mb-6 border-b border-line">
       <AppDropdown :isCollapsed="sidebarStore.isCollapsed" position="bottom">
         <template #trigger>
@@ -25,14 +26,6 @@
               <div class="w-5 h-5 bg-red-500 rounded flex items-center justify-center text-[10px] font-bold text-white">A1</div>
               App 1
             </button>
-            <button class="w-full flex items-center gap-3 p-2 hover:bg-side rounded-lg text-sm text-txt-main cursor-pointer">
-              <div class="w-5 h-5 bg-purple-500 rounded flex items-center justify-center text-[10px] font-bold text-white">A2</div>
-              App 2
-            </button>
-            <div class="h-px bg-line mx-1 my-1"></div>
-            <button class="w-full flex items-center gap-3 p-2 hover:bg-side rounded-lg text-sm text-txt-muted cursor-pointer">
-              <Plus class="w-4 h-4" /> New team...
-            </button>
           </div>
         </template>
       </AppDropdown>
@@ -48,11 +41,12 @@
     <div class="mt-auto pt-2 border-t border-line">
       <AppDropdown :isCollapsed="sidebarStore.isCollapsed" position="top">
         <template #trigger>
-          <div :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-2']" class="w-full flex items-center gap-3 py-2 hover:bg-main/50 rounded-xl transition-all group">
-            <img src="https://ui-avatars.com/api/?name=Erica&background=333&color=fff" class="w-8 h-8 rounded-lg border border-line shrink-0" alt="Avatar" />
+          <div :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-2']" class="w-full flex items-center gap-3 py-2 hover:bg-main/50 rounded-xl transition-all group cursor-pointer">
+            <img :src="userAvatar" class="w-8 h-8 rounded-lg border border-line shrink-0" alt="Avatar" />
+
             <div v-if="!sidebarStore.isCollapsed" class="flex-1 text-left min-w-0">
-              <p class="text-sm font-semibold text-txt-main truncate">Erica</p>
-              <p class="text-[11px] text-txt-muted truncate font-medium">erica@example.com</p>
+              <p class="text-sm font-semibold text-txt-main truncate">{{ userName }}</p>
+              <p class="text-[11px] text-txt-muted truncate font-medium">{{ userEmail }}</p>
             </div>
             <ChevronUp v-if="!sidebarStore.isCollapsed" class="w-4 h-4 text-txt-muted shrink-0" />
           </div>
@@ -67,17 +61,21 @@
               <Moon class="w-3.5 h-3.5" /> Dark
             </button>
           </div>
+
           <div class="space-y-0.5 mb-2">
             <button v-for="lang in [{ id: 'en', n: 'English' }, { id: 'tr', n: 'Türkçe' }]" :key="lang.id" @click="setLanguage(lang.id)" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer" :class="[locale === lang.id ? 'bg-main text-txt-main' : 'text-txt-muted hover:bg-side']">
               <span>{{ lang.n }}</span>
               <Check v-if="locale === lang.id" class="w-3.5 h-3.5" />
             </button>
           </div>
+
           <div class="h-px bg-line mx-1 mb-1"></div>
-          <button @click="redirectToAccount(); sidebarStore.isMobileOpen = false" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-side rounded-lg text-xs text-txt-main cursor-pointer">
+
+          <button @click="redirectToAccount(); sidebarStore.isMobileOpen = false; close()" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-side rounded-lg text-xs text-txt-main cursor-pointer">
             <UserCircle class="w-4 h-4 opacity-60" /> {{ $t('common.account') }}
           </button>
-          <button @click="close" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-red-500/10 rounded-lg text-xs text-red-500 cursor-pointer">
+
+          <button @click="handleLogout" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-red-500/10 rounded-lg text-xs text-red-500 cursor-pointer">
             <LogOut class="w-4 h-4" /> {{ $t('auth.logout') }}
           </button>
         </template>
@@ -87,14 +85,16 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useSidebarStore } from '@/stores/sidebar';
 import { useThemeStore } from '@/stores/theme';
+import { useAuthStore } from '@/stores/auth';
 import {
   Home, Calendar, ShoppingCart, Settings,
   ChevronDown, ChevronUp, UserCircle, LogOut, Sun, Moon,
-  Check, Plus
+  Check,
 } from 'lucide-vue-next';
 import AppDropdown from '@/components/ui/AppDropdown.vue';
 
@@ -102,6 +102,11 @@ const { locale } = useI18n();
 const router = useRouter();
 const sidebarStore = useSidebarStore();
 const themeStore = useThemeStore();
+const authStore = useAuthStore();
+
+const userEmail = computed(() => authStore.user?.email || 'user@proteus.com');
+const userName = computed(() => userEmail.value.split('@')[0]);
+const userAvatar = computed(() => `https://ui-avatars.com/api/?name=${userName.value}&background=333&color=fff`);
 
 const setLanguage = (lang) => {
   locale.value = lang;
@@ -117,5 +122,9 @@ const menuItems = [
 
 const redirectToAccount = () => {
   router.push('/profile');
+};
+
+const handleLogout = async () => {
+  await authStore.logout();
 };
 </script>
