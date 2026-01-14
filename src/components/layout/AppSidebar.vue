@@ -42,10 +42,10 @@
       <AppDropdown :isCollapsed="sidebarStore.isCollapsed" position="top">
         <template #trigger>
           <div :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-2']" class="w-full flex items-center gap-3 py-2 hover:bg-main/50 rounded-xl transition-all group cursor-pointer">
-            <img :src="userAvatar" class="w-8 h-8 rounded-lg border border-line shrink-0" alt="Avatar" />
+            <img :src="displayAvatar" class="w-8 h-8 rounded-lg border border-line shrink-0" alt="Avatar" />
 
             <div v-if="!sidebarStore.isCollapsed" class="flex-1 text-left min-w-0">
-              <p class="text-sm font-semibold text-txt-main truncate">{{ userName }}</p>
+              <p class="text-sm font-semibold text-txt-main truncate">{{ displayName }}</p>
               <p class="text-[11px] text-txt-muted truncate font-medium">{{ userEmail }}</p>
             </div>
             <ChevronUp v-if="!sidebarStore.isCollapsed" class="w-4 h-4 text-txt-muted shrink-0" />
@@ -126,8 +126,18 @@ const authStore = useAuthStore();
 const showLogoutModal = ref(false);
 
 const userEmail = computed(() => authStore.user?.email || 'user@proteus.com');
-const userName = computed(() => userEmail.value.split('@')[0]);
-const userAvatar = computed(() => `https://ui-avatars.com/api/?name=${userName.value}&background=333&color=fff`);
+
+const displayName = computed(() => {
+  if (authStore.user?.firstName && authStore.user?.lastName) {
+    return `${authStore.user.firstName} ${authStore.user.lastName}`;
+  }
+  return authStore.user?.email?.split('@')[0] || 'Kullanıcı';
+});
+
+const displayAvatar = computed(() => {
+  if (authStore.user?.avatar) return authStore.user.avatar;
+  return `https://ui-avatars.com/api/?name=${displayName.value}&background=333&color=fff`;
+});
 
 const setLanguage = (lang) => {
   locale.value = lang;
