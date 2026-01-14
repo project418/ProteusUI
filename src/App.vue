@@ -12,7 +12,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 const route = useRoute()
 const authStore = useAuthStore()
 
-const isAuthPage = computed(() => ['login', 'register'].includes(route.name))
+const isAuthPage = computed(() => route.meta.layout === 'auth')
 
 onMounted(() => {
   authStore.initAuth()

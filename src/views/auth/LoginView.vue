@@ -20,9 +20,9 @@
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between px-1">
                         <label class="text-[10px] font-bold text-txt-muted uppercase tracking-widest">{{ $t('auth.password') }}</label>
-                        <a href="#" class="text-[10px] font-bold text-txt-muted hover:text-txt-main transition-colors uppercase tracking-widest">
+                        <button type="button" @click="showForgotModal = true" class="text-[10px] font-bold text-txt-muted hover:text-txt-main transition-colors uppercase tracking-widest cursor-pointer">
                             {{ $t('auth.forgotPassword') }}
-                        </a>
+                        </button>
                     </div>
                     <input v-model="password" type="password" class="w-full bg-card border border-line rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 ring-txt-main/5 focus:border-txt-main/20 transition-all text-txt-main" placeholder="••••••••" required />
                 </div>
@@ -58,6 +58,27 @@
                 <option value="en">EN</option>
             </select>
         </div>
+
+        <AppModal :show="showForgotModal" title="Şifremi Unuttum" size="sm" @close="showForgotModal = false">
+            <div class="space-y-6">
+                <div class="text-center space-y-2">
+                    <div class="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto">
+                        <KeyRound class="w-6 h-6" />
+                    </div>
+                    <p class="text-sm text-txt-muted">
+                        Hesabınıza ait e-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <AppInput v-model="forgotEmail" label="E-posta Adresi" placeholder="ornek@sirket.com" />
+                    <button @click="handleForgotPassword" :disabled="isSendingReset || !forgotEmail" class="w-full bg-txt-main text-main py-2.5 rounded-xl font-bold text-xs hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
+                        <Loader2 v-if="isSendingReset" class="w-3.5 h-3.5 animate-spin" />
+                        {{ isSendingReset ? 'Gönderiliyor...' : 'Sıfırlama Bağlantısı Gönder' }}
+                    </button>
+                </div>
+            </div>
+        </AppModal>
 
         <AppModal :show="showVerifyModal" title="İki Aşamalı Doğrulama" size="sm" :closeOnBackdrop="false" @close="showVerifyModal = false">
             <div class="space-y-6 py-2">
@@ -112,7 +133,7 @@
 import { ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { Sun, Moon, Loader2, ShieldCheck } from 'lucide-vue-next';
+import { Sun, Moon, Loader2, ShieldCheck, KeyRound } from 'lucide-vue-next'; // KeyRound eklendi
 import { useThemeStore } from '@/stores/theme';
 import { useAuthStore } from '@/stores/auth';
 import AppInput from '@/components/forms/AppInput.vue';
@@ -132,6 +153,11 @@ const isLoading = ref(false)
 // Modals State
 const showVerifyModal = ref(false)
 const showSetupModal = ref(false)
+const showForgotModal = ref(false)
+
+// Forgot Password Logic
+const forgotEmail = ref('')
+const isSendingReset = ref(false)
 
 // Verify Logic (OTP Input)
 const isVerifying = ref(false)
@@ -157,6 +183,19 @@ const handleLogin = async () => {
         } else {
             router.push('/')
         }
+    }
+}
+
+const handleForgotPassword = async () => {
+    if (!forgotEmail.value) return;
+
+    isSendingReset.value = true;
+    const success = await authStore.sendPasswordResetEmail(forgotEmail.value);
+    isSendingReset.value = false;
+
+    if (success) {
+        showForgotModal.value = false;
+        forgotEmail.value = '';
     }
 }
 

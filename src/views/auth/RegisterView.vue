@@ -15,6 +15,12 @@
 
         <div class="w-full max-w-[400px] space-y-6">
             <form @submit.prevent="handleRegister" class="space-y-4">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <AppInput v-model="form.firstName" label="Ad" placeholder="John" :error="v$.firstName.$error ? 'Ad gereklidir' : ''" />
+                    <AppInput v-model="form.lastName" label="Soyad" placeholder="Doe" :error="v$.lastName.$error ? 'Soyad gereklidir' : ''" />
+                </div>
+
                 <AppInput v-model="form.email" label="E-posta Adresi" type="email" placeholder="name@company.com" :error="v$.email.$error ? 'Geçerli bir e-posta giriniz' : ''" />
 
                 <div class="space-y-1.5">
@@ -72,12 +78,16 @@ const themeStore = useThemeStore()
 const isLoading = ref(false)
 
 const form = reactive({
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: ''
 })
 
 const rules = computed(() => ({
+    firstName: { required },
+    lastName: { required },
     email: { required, email },
     password: { required, minLength: minLength(6) },
     confirmPassword: { required, sameAs: sameAs(form.password) }
@@ -91,12 +101,12 @@ const handleRegister = async () => {
 
     isLoading.value = true
 
-    const result = await authStore.register(form.email, form.password)
+    const result = await authStore.register(form.email, form.password, form.firstName, form.lastName)
 
     isLoading.value = false
 
     if (result.success) {
-        router.push('/') // Başarılı kayıt sonrası anasayfaya yönlendir
+        router.push('/')
     }
 }
 </script>

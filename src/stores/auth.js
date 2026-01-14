@@ -39,16 +39,34 @@ const LOGIN_MUTATION = gql`
 `
 
 const REGISTER_MUTATION = gql`
-  mutation Register($email: String!, $password: String!) {
+  mutation Register($email: String!, $password: String!, $firstName: String!, $lastName: String!) {
     auth {
-      register(email: $email, password: $password) {
+      register(email: $email, password: $password, firstName: $firstName, lastName: $lastName) {
         accessToken
         refreshToken
         user {
           id
           email
+          firstName
+          lastName
         }
       }
+    }
+  }
+`
+
+const SEND_PASSWORD_RESET_EMAIL_MUTATION = gql`
+  mutation SendPasswordResetEmail($email: String!) {
+    auth {
+      sendPasswordResetEmail(email: $email)
+    }
+  }
+`
+
+const RESET_PASSWORD_MUTATION = gql`
+  mutation ResetPassword($token: String!, $password: String!) {
+    auth {
+      resetPassword(token: $token, password: $password)
     }
   }
 `
@@ -222,11 +240,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function register(email, password) {
+  async function register(email, password, firstName, lastName) {
     try {
       const { data } = await apolloClient.mutate({
         mutation: REGISTER_MUTATION,
-        variables: { email, password }
+        variables: { email, password, firstName, lastName }
       })
 
       const result = data.auth.register
@@ -241,6 +259,44 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error) {
       toast.add(error.message || 'Kayıt işlemi başarısız.', 'error')
       return { success: false, error: error.message }
+    }
+  }
+
+  async function sendPasswordResetEmail(email) {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: SEND_PASSWORD_RESET_EMAIL_MUTATION,
+        variables: { email }
+      })
+
+      if (data.auth.sendPasswordResetEmail) {
+        toast.add('Sıfırlama bağlantısı e-posta adresinize gönderildi.', 'success')
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Password reset error:', error)
+      toast.add(error.message || 'İşlem başarısız.', 'error')
+      return false
+    }
+  }
+
+  async function resetPassword(token, password) {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: RESET_PASSWORD_MUTATION,
+        variables: { token, password }
+      })
+
+      if (data.auth.resetPassword) {
+        toast.add('Şifreniz başarıyla değiştirildi. Giriş yapabilirsiniz.', 'success')
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Reset password error:', error)
+      toast.add(error.message || 'Şifre sıfırlama başarısız.', 'error')
+      return false
     }
   }
 
@@ -298,7 +354,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 4. Yeni MFA Cihazı Kurulumunu Başlat
   async function createTotpDevice(deviceName = 'ProteusApp') {
     try {
       const { data } = await apolloClient.mutate({
@@ -315,7 +370,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 5. MFA Cihazını Doğrula ve Kurulumu Tamamla
   async function verifyTotpDevice(deviceName, code) {
     try {
       const { data } = await apolloClient.mutate({
@@ -347,7 +401,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 6. MFA Cihazını Kaldır
   async function removeTotpDevice(deviceName) {
     try {
       await apolloClient.mutate({
@@ -371,7 +424,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 7. Kayıtlı MFA Cihazlarını Listele
   async function fetchTotpDevices() {
     if (!token.value) return
 
@@ -388,7 +440,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 8. Oturumu Başlat
   async function initAuth() {
     if (!token.value) return
 
@@ -413,7 +464,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 9. Çıkış Yap
   async function logout() {
     try {
       if (token.value) await apolloClient.mutate({ mutation: LOGOUT_MUTATION })
@@ -465,6 +515,8 @@ export const useAuthStore = defineStore('auth', () => {
     hasMfaEnabled,
     login,
     register,
+    sendPasswordResetEmail,
+    resetPassword,
     updateProfile,
     verifyMfa,
     createTotpDevice,
