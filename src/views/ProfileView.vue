@@ -12,6 +12,10 @@
               </div>
             </div>
 
+            <button v-if="profileForm.avatar" @click="openRemoveAvatarModal" class="absolute -top-2 -right-2 p-1.5 bg-card border border-line text-rose-500 rounded-full shadow-md hover:bg-rose-500 hover:text-white hover:scale-110 transition-all z-10 cursor-pointer" title="Fotoğrafı Kaldır">
+              <X class="w-3.5 h-3.5" />
+            </button>
+
             <button @click="showAvatarModal = true" class="absolute -bottom-2 -right-2 p-2 bg-txt-main text-main rounded-lg shadow-lg hover:scale-110 transition-transform cursor-pointer">
               <Camera class="w-4 h-4" />
             </button>
@@ -158,33 +162,14 @@
             </section>
           </div>
 
-          <div v-if="['notifications', 'integrations'].includes(activeTab)" class="space-y-8">
-            <div class="p-12 bg-card border border-line rounded-2xl text-center flex flex-col items-center gap-3">
-              <div class="w-12 h-12 bg-side rounded-full flex items-center justify-center text-txt-muted">
-                <component :is="activeTab === 'notifications' ? Bell : Globe" class="w-6 h-6" />
-              </div>
-              <p class="text-sm font-bold text-txt-main">Bu özellik yakında eklenecek.</p>
-            </div>
-          </div>
-
         </div>
       </div>
     </div>
 
     <AppModal :show="showAvatarModal" title="Profil Fotoğrafı Yükle" size="sm" @close="showAvatarModal = false">
       <div class="space-y-6">
-        <div class="relative border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center gap-3 group cursor-pointer" :class="isDraggingAvatar ? 'border-txt-main bg-txt-main/5' : 'border-line hover:border-txt-main/30 bg-card/50'" @dragover.prevent="isDraggingAvatar = true" @dragleave.prevent="isDraggingAvatar = false" @drop.prevent="handleAvatarDrop" @click="triggerFileInput">
-          <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleFileUpload" />
 
-          <div class="w-12 h-12 rounded-full bg-side flex items-center justify-center text-txt-muted group-hover:scale-110 transition-transform">
-            <UploadCloud class="w-6 h-6" />
-          </div>
-
-          <div class="text-center space-y-1">
-            <p class="text-sm font-bold text-txt-main">Fotoğrafı buraya sürükleyin</p>
-            <p class="text-xs text-txt-muted">veya seçmek için tıklayın</p>
-          </div>
-        </div>
+        <AppFileUpload label="" accept="image/png, image/jpeg" :multiple="false" :maxSize="1" @change="handleAvatarChange" />
 
         <div class="flex items-center gap-3 p-3 rounded-lg bg-side/50 border border-line">
           <Info class="w-4 h-4 text-blue-500 shrink-0" />
@@ -196,6 +181,20 @@
       </div>
       <template #footer>
         <button @click="showAvatarModal = false" class="px-4 py-2 text-xs font-bold text-txt-muted hover:text-txt-main transition-colors">Vazgeç</button>
+      </template>
+    </AppModal>
+
+    <AppModal :show="showDeleteAvatarModal" title="Profil Fotoğrafını Kaldır" size="sm" @close="showDeleteAvatarModal = false">
+      <div class="text-center py-4">
+        <div class="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Trash2 class="w-6 h-6" />
+        </div>
+        <p class="text-sm font-bold text-txt-main">Profil fotoğrafınız silinecek.</p>
+        <p class="text-xs text-txt-muted mt-2 max-w-[220px] mx-auto">Bu işlem geri alınamaz. Fotoğrafı kaldırmak istediğinize emin misiniz?</p>
+      </div>
+      <template #footer>
+        <button @click="showDeleteAvatarModal = false" class="px-4 py-2 text-xs font-bold text-txt-muted hover:text-txt-main transition-colors">Vazgeç</button>
+        <button @click="confirmRemoveAvatar" class="px-6 py-2 bg-rose-500 text-white rounded-lg text-xs font-bold hover:bg-rose-600 transition-colors">Evet, Kaldır</button>
       </template>
     </AppModal>
 
@@ -231,7 +230,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
-import { User, Camera, ShieldCheck, Bell, Globe, Plus, X, Trash2, RefreshCw, Loader2, UploadCloud, Info } from 'lucide-vue-next';
+import { User, Camera, ShieldCheck, Bell, Globe, Plus, X, Trash2, RefreshCw, Loader2, Info } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import QRCode from 'qrcode';
@@ -240,6 +239,7 @@ import AppInput from '@/components/forms/AppInput.vue';
 import AppSelect from '@/components/forms/AppSelect.vue';
 import AppPhoneInput from '@/components/forms/AppPhoneInput.vue';
 import AppModal from '@/components/ui/AppModal.vue';
+import AppFileUpload from '@/components/forms/AppFileUpload.vue';
 
 const authStore = useAuthStore();
 const toast = useToastStore();
@@ -249,9 +249,7 @@ const isPasswordSaving = ref(false);
 
 const tabs = [
   { id: 'general', label: 'Profil', icon: User },
-  { id: 'security', label: 'Güvenlik', icon: ShieldCheck },
-  { id: 'notifications', label: 'Bildirimler', icon: Bell },
-  { id: 'integrations', label: 'Bağlantılar', icon: Globe },
+  { id: 'security', label: 'Güvenlik', icon: ShieldCheck }
 ];
 
 const timezones = [
@@ -304,33 +302,18 @@ const displayAvatar = computed(() => {
 });
 
 const showAvatarModal = ref(false);
-const isDraggingAvatar = ref(false);
+const showDeleteAvatarModal = ref(false);
 const isAvatarUploading = ref(false);
-const fileInput = ref(null);
 
-const triggerFileInput = () => {
-  fileInput.value.click();
-};
-
-const handleAvatarDrop = (e) => {
-  isDraggingAvatar.value = false;
-  const file = e.dataTransfer.files[0];
-  if (file) processAvatarFile(file);
-};
-
-const handleFileUpload = (event) => {
-  const file = event.target.files[0];
-  if (file) processAvatarFile(file);
+const handleAvatarChange = (files) => {
+  if (files && files.length > 0) {
+    processAvatarFile(files[0]);
+  }
 };
 
 const processAvatarFile = (file) => {
   if (!file.type.startsWith('image/')) {
     toast.add('Lütfen geçerli bir resim dosyası seçiniz.', 'error');
-    return;
-  }
-
-  if (file.size > 1 * 1024 * 1024) {
-    toast.add('Dosya boyutu 1MB\'dan küçük olmalıdır.', 'error');
     return;
   }
 
@@ -351,6 +334,22 @@ const processAvatarFile = (file) => {
     isAvatarUploading.value = false;
   };
   reader.readAsDataURL(file);
+};
+
+const openRemoveAvatarModal = () => {
+  showDeleteAvatarModal.value = true;
+};
+
+const confirmRemoveAvatar = async () => {
+  showDeleteAvatarModal.value = false;
+  isAvatarUploading.value = true;
+  const success = await authStore.updateProfile({ avatar: '' }, false);
+
+  if (success) {
+    profileForm.avatar = '';
+    toast.add('Profil fotoğrafı kaldırıldı.', 'success');
+  }
+  isAvatarUploading.value = false;
 };
 
 const saveProfile = async () => {

@@ -8,7 +8,7 @@
       isDragging ? 'border-txt-main bg-txt-main/5' : 'border-line hover:border-txt-main/30 bg-card/50',
       error ? 'border-rose-500/50' : ''
     ]">
-      <input type="file" class="absolute inset-0 opacity-0 cursor-pointer" @change="handleFileSelect" multiple />
+      <input type="file" class="absolute inset-0 opacity-0 cursor-pointer" @change="handleFileSelect" :accept="accept" :multiple="multiple" />
 
       <div class="w-10 h-10 rounded-full bg-side flex items-center justify-center text-txt-muted group-hover:scale-110 transition-transform">
         <UploadCloud class="w-5 h-5" />
@@ -16,7 +16,9 @@
 
       <div class="text-center">
         <p class="text-[12px] font-bold text-txt-main">{{ $t('forms.file.dropHere') }}</p>
-        <p class="text-[10px] text-txt-muted font-medium mt-0.5">PDF, PNG, JPG ({{ $t('common.max') }}. 10MB)</p>
+        <p class="text-[10px] text-txt-muted font-medium mt-0.5">
+          PDF, PNG, JPG ({{ $t('common.max') }}. {{ maxSize }}MB)
+        </p>
       </div>
     </div>
 
@@ -39,21 +41,53 @@
 <script setup>
 import { ref } from 'vue';
 import { UploadCloud, FileText, X } from 'lucide-vue-next';
+import { useToastStore } from '@/stores/toast';
 
-defineProps(['label', 'error']);
+const props = defineProps({
+  label: String,
+  error: String,
+  accept: { type: String, default: '*' },
+  multiple: { type: Boolean, default: true },
+  maxSize: { type: Number, default: 10 }
+});
+
+const emit = defineEmits(['change']);
+const toast = useToastStore();
 
 const files = ref([]);
 const isDragging = ref(false);
 
+const handleFiles = (selectedFiles) => {
+  const validFiles = [];
+
+  for (const file of selectedFiles) {
+    if (file.size > props.maxSize * 1024 * 1024) {
+      toast.add(`"${file.name}" dosyası çok büyük! Maksimum ${props.maxSize}MB yükleyebilirsiniz.`, 'error');
+      continue;
+    }
+    validFiles.push(file);
+  }
+
+  if (validFiles.length === 0) return;
+
+  if (!props.multiple) {
+    files.value = [];
+  }
+
+  files.value.push(...validFiles);
+  emit('change', validFiles);
+};
+
 const handleFileSelect = (e) => {
   const selected = Array.from(e.target.files);
-  files.value.push(...selected);
+  handleFiles(selected);
+  e.target.value = '';
 };
 
 const handleDrop = (e) => {
   isDragging.value = false;
   const dropped = Array.from(e.dataTransfer.files);
-  files.value.push(...dropped);
+  handleFiles(dropped);
 };
 
 const removeFile = (file) => {
