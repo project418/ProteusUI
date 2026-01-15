@@ -7,8 +7,9 @@ export const useThemeStore = defineStore('theme', () => {
     attribute: 'class',
     valueDark: 'dark',
     valueLight: 'light',
+    storageKey: 'theme',
   })
-  
+
   const toggleTheme = useToggle(isDark)
 
   return { isDark, toggleTheme }
