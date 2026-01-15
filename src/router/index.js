@@ -23,18 +23,26 @@ const router = createRouter({
       component: () => import('../views/auth/ResetPasswordView.vue'),
       meta: { guestOnly: true, layout: 'auth' }
     },
+    {
+      path: '/auth/join-tenant',
+      name: 'join-tenant',
+      component: () => import('../views/auth/JoinTenantView.vue'),
+      meta: { requiresAuth: true, layout: 'auth' }
+    },
+
+    // --- Onboarding ---
+    {
+      path: '/onboarding',
+      name: 'onboarding',
+      component: () => import('../views/OnboardingView.vue'),
+      meta: { requiresAuth: true }
+    },
 
     // --- Protected Routes ---
     {
       path: '/',
       name: 'home',
       component: () => import('../views/HomeView.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/onboarding',
-      name: 'onboarding',
-      component: () => import('../views/OnboardingView.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -104,7 +112,7 @@ router.beforeEach(async (to, from, next) => {
     const hasTenants = authStore.availableTenants && authStore.availableTenants.length > 0;
 
     if (!hasTenants) {
-      if (to.name !== 'onboarding' && to.name !== 'profile') {
+      if (to.name !== 'onboarding' && to.name !== 'profile' && to.name !== 'join-tenant') {
         return next({ name: 'onboarding' });
       }
     } else {

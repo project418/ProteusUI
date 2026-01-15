@@ -5,7 +5,7 @@ import gql from 'graphql-tag'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/toast'
 
-// --- GraphQL ---
+// --- GRAPHQL MUTATIONS & QUERIES ---
 
 const LOGIN_MUTATION = gql`
   mutation Login($email: String!, $password: String!) {
@@ -16,6 +16,7 @@ const LOGIN_MUTATION = gql`
         requiresMfa
         mfaEnforced
         mfaEnabled
+        requiresPasswordChange
         permissions
         user {
           id
@@ -70,6 +71,72 @@ const CREATE_TENANT_MUTATION = gql`
   }
 `
 
+const UPDATE_TENANT_MUTATION = gql`
+  mutation UpdateTenant($name: String!) {
+    auth {
+      updateTenant(name: $name) {
+        id
+        name
+      }
+    }
+  }
+`
+
+const GET_TENANT_USERS_QUERY = gql`
+  query TenantUsers($limit: Int, $paginationToken: String) {
+    auth {
+      tenantUsers(limit: $limit, paginationToken: $paginationToken) {
+        users {
+          id
+          email
+          firstName
+          lastName
+          avatar
+          timeJoined
+        }
+        nextPaginationToken
+      }
+    }
+  }
+`
+
+const REMOVE_USER_MUTATION = gql`
+  mutation RemoveUserFromTenant($userId: String!) {
+    auth {
+      removeUserFromTenant(userId: $userId)
+    }
+  }
+`
+
+const INVITE_USER_MUTATION = gql`
+  mutation InviteUser($email: String!, $roleName: String!) {
+    auth {
+      inviteUser(email: $email, roleName: $roleName)
+    }
+  }
+`
+
+const ACCEPT_INVITE_MUTATION = gql`
+  mutation AcceptInvite($token: String!) {
+    auth {
+      acceptInvite(token: $token)
+    }
+  }
+`
+
+const LIST_POLICIES_QUERY = gql`
+  query ListPolicies {
+    auth {
+      listPolicies {
+        name
+        policy {
+          description
+        }
+      }
+    }
+  }
+`
+
 const SEND_PASSWORD_RESET_EMAIL_MUTATION = gql`
   mutation SendPasswordResetEmail($email: String!) {
     auth {
@@ -91,15 +158,15 @@ const UPDATE_ME_MUTATION = gql`
     auth {
       updateMe(input: $input) {
         id
-          email
-          firstName
-          lastName
-          title
-          phone
-          countryCode
-          timezone
-          language
-          avatar
+        email
+        firstName
+        lastName
+        title
+        phone
+        countryCode
+        timezone
+        language
+        avatar
       }
     }
   }
@@ -176,6 +243,10 @@ const ME_QUERY = gql`
         avatar
       }
       myPermissions
+      myTenants {
+        id
+        name
+      }
     }
   }
 `
@@ -192,7 +263,7 @@ export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
   const toast = useToastStore()
 
-  // --- State ---
+  // --- STATE ---
   const user = ref(null)
   const token = ref(localStorage.getItem('proteus_access_token') || null)
 
@@ -200,21 +271,24 @@ export const useAuthStore = defineStore('auth', () => {
   const tenantId = ref(localStorage.getItem('proteus_tenant_id') || null)
   const currentTenant = ref(JSON.parse(localStorage.getItem('proteus_current_tenant') || 'null'))
   const availableTenants = ref(JSON.parse(localStorage.getItem('proteus_available_tenants') || '[]'))
+  const roles = ref([])
 
+  // Permissions & MFA State
+  const requiresPasswordChange = ref(false)
   const permissions = ref(null)
-
   const isMfaRequired = ref(false)
   const isMfaVerified = ref(false)
-
   const hasMfaEnabledState = ref(localStorage.getItem('proteus_mfa_enabled') === 'true')
   const totpDevices = ref([])
 
-  // --- Getters ---
+  // --- GETTERS ---
   const isAuthenticated = computed(() => !!token.value && (!isMfaRequired.value || isMfaVerified.value))
   const hasMfaEnabled = computed(() => hasMfaEnabledState.value)
   const hasTenant = computed(() => !!tenantId.value)
 
-  // --- Actions ---
+  // --- ACTIONS ---
+
+  // 1. Authentication
   async function login(email, password) {
     try {
       const { data } = await apolloClient.mutate({
@@ -230,6 +304,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('proteus_mfa_enabled', result.mfaEnabled)
 
       user.value = result.user
+      requiresPasswordChange.value = result.requiresPasswordChange || false
       permissions.value = result.permissions
 
       // Tenant Management
@@ -238,10 +313,16 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (result.tenant) {
         setActiveTenant(result.tenant)
-      } else if (availableTenants.value.length > 0) {        
+      } else if (availableTenants.value.length > 0) {
         setActiveTenant(availableTenants.value[0])
       } else {
         clearActiveTenant()
+      }
+
+      // Password Change Enforcement
+      if (requiresPasswordChange.value) {
+        toast.add('Güvenliğiniz için şifrenizi değiştirmeniz gerekmektedir.', 'warning')
+        return { success: true, status: 'PASSWORD_CHANGE_REQUIRED' }
       }
 
       // MFA Handling
@@ -298,6 +379,45 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function logout() {
+    try {
+      if (token.value) {
+        await apolloClient.mutate({ mutation: LOGOUT_MUTATION })
+      }
+    } catch (error) {
+      console.warn('Logout hatası', error)
+    } finally {
+      user.value = null
+      token.value = null
+
+      clearActiveTenant()
+      availableTenants.value = []
+      localStorage.removeItem('proteus_available_tenants')
+
+      tenantId.value = null
+      permissions.value = null
+      isMfaRequired.value = false
+      isMfaVerified.value = false
+      totpDevices.value = []
+      hasMfaEnabledState.value = false
+
+      localStorage.removeItem('proteus_access_token')
+      localStorage.removeItem('proteus_refresh_token')
+      localStorage.removeItem('proteus_tenant_id')
+      localStorage.removeItem('proteus_mfa_enabled')
+
+      try {
+        await apolloClient.resetStore()
+      } catch {
+        await apolloClient.clearStore()
+      }
+
+      router.push('/login')
+      toast.add('Başarıyla çıkış yapıldı.', 'info')
+    }
+  }
+
+  // 2. Tenant Management
   async function createTenant(name) {
     try {
       const { data } = await apolloClient.mutate({
@@ -321,6 +441,35 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateTenant(name) {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: UPDATE_TENANT_MUTATION,
+        variables: { name }
+      })
+
+      const updated = data.auth.updateTenant
+
+      if (currentTenant.value && currentTenant.value.id === updated.id) {
+        currentTenant.value.name = updated.name
+        localStorage.setItem('proteus_current_tenant', JSON.stringify(currentTenant.value))
+      }
+
+      const idx = availableTenants.value.findIndex(t => t.id === updated.id)
+      if (idx !== -1) {
+        availableTenants.value[idx].name = updated.name
+        localStorage.setItem('proteus_available_tenants', JSON.stringify(availableTenants.value))
+      }
+
+      toast.add('Organizasyon bilgileri güncellendi.', 'success')
+      return true
+    } catch (error) {
+      console.error('Update tenant error:', error)
+      toast.add(error.message || 'Güncelleme başarısız.', 'error')
+      return false
+    }
+  }
+
   async function switchTenant(newTenantId) {
     const targetTenant = availableTenants.value.find(t => t.id === newTenantId)
 
@@ -339,20 +488,91 @@ export const useAuthStore = defineStore('auth', () => {
     return false
   }
 
-  function setActiveTenant(tenant) {
-    currentTenant.value = tenant
-    tenantId.value = tenant.id
-    localStorage.setItem('proteus_tenant_id', tenant.id)
-    localStorage.setItem('proteus_current_tenant', JSON.stringify(tenant))
+  // 3. User & Role Management
+  async function fetchTenantUsers(limit = 10, paginationToken = null) {
+    try {
+      const { data } = await apolloClient.query({
+        query: GET_TENANT_USERS_QUERY,
+        variables: { limit, paginationToken },
+        fetchPolicy: 'network-only'
+      })
+      return data.auth.tenantUsers
+    } catch (error) {
+      console.error('Fetch users error:', error)
+      toast.add('Kullanıcı listesi alınamadı.', 'error')
+      return { users: [], nextPaginationToken: null }
+    }
   }
 
-  function clearActiveTenant() {
-    currentTenant.value = null
-    tenantId.value = null
-    localStorage.removeItem('proteus_tenant_id')
-    localStorage.removeItem('proteus_current_tenant')
+  async function removeUserFromTenant(userId) {
+    try {
+      await apolloClient.mutate({
+        mutation: REMOVE_USER_MUTATION,
+        variables: { userId }
+      })
+
+      toast.add('Kullanıcı organizasyondan çıkarıldı.', 'success')
+      return true
+    } catch (error) {
+      console.error('Remove user error:', error)
+      toast.add(error.message || 'İşlem başarısız.', 'error')
+      return false
+    }
   }
 
+  async function fetchRoles() {
+    try {
+      const { data } = await apolloClient.query({
+        query: LIST_POLICIES_QUERY,
+        fetchPolicy: 'network-only'
+      })
+
+      roles.value = data.auth.listPolicies || []
+      return roles.value
+    } catch (error) {
+      console.error('Fetch roles error:', error)
+      return []
+    }
+  }
+
+  async function inviteUser(email, roleName) {
+    try {
+      await apolloClient.mutate({
+        mutation: INVITE_USER_MUTATION,
+        variables: { email, roleName }
+      })
+
+      toast.add(`${email} adresine davet gönderildi.`, 'success')
+      return true
+    } catch (error) {
+      console.error('Invite user error:', error)
+      toast.add(error.message || 'Davet gönderilemedi.', 'error')
+      return false
+    }
+  }
+
+  async function acceptInvite(token) {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: ACCEPT_INVITE_MUTATION,
+        variables: { token }
+      })
+
+      if (data.auth.acceptInvite) {
+        toast.add('Organizasyona başarıyla katıldınız.', 'success')
+        
+        await initAuth()
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Accept invite error:', error)
+      toast.add(error.message || 'Davet kabul edilemedi.', 'error')
+      return false
+    }
+  }
+
+  // 4. Password Management
   async function sendPasswordResetEmail(email) {
     try {
       const { data } = await apolloClient.mutate({
@@ -391,6 +611,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 5. Profile & MFA
   async function updateProfile(input, notify = true) {
     try {
       const { data } = await apolloClient.mutate({
@@ -399,13 +620,15 @@ export const useAuthStore = defineStore('auth', () => {
       })
 
       const updatedUser = data.auth.updateMe
-
       user.value = { ...user.value, ...updatedUser }
+
+      if (input.password) {
+        requiresPasswordChange.value = false
+      }
 
       if (notify) {
         toast.add('Profil bilgileri başarıyla güncellendi.', 'success')
       }
-
       return true
     } catch (error) {
       console.error('Update profile error:', error)
@@ -432,12 +655,10 @@ export const useAuthStore = defineStore('auth', () => {
         isMfaRequired.value = false
 
         fetchTotpDevices()
-
         toast.add('Doğrulama başarılı.', 'success')
         return true
       }
       return false
-
     } catch (error) {
       console.error('Verify MFA error:', error)
       toast.add('Hatalı doğrulama kodu.', 'error')
@@ -453,7 +674,6 @@ export const useAuthStore = defineStore('auth', () => {
       })
 
       fetchTotpDevices()
-
       return { success: true, ...data.auth.createTotpDevice }
     } catch (error) {
       toast.add(error.message || 'MFA kurulumu başlatılamadı.', 'error')
@@ -506,7 +726,6 @@ export const useAuthStore = defineStore('auth', () => {
         hasMfaEnabledState.value = false
         localStorage.setItem('proteus_mfa_enabled', 'false')
       }
-
       return true
     } catch (error) {
       console.error('Remove TOTP Device error:', error)
@@ -540,9 +759,22 @@ export const useAuthStore = defineStore('auth', () => {
         fetchPolicy: 'network-only'
       })
 
-      if (data.auth && data.auth.me) {
-        user.value = data.auth.me
+      if (data.auth) {
+        if (data.auth.me) {
+          user.value = data.auth.me
+        }
+
         permissions.value = data.auth.myPermissions
+
+        if (data.auth.myTenants) {
+          availableTenants.value = data.auth.myTenants
+          localStorage.setItem('proteus_available_tenants', JSON.stringify(availableTenants.value))
+
+          if (!currentTenant.value && availableTenants.value.length > 0) {
+            setActiveTenant(availableTenants.value[0])
+          }
+        }
+
         isMfaVerified.value = true
 
         if (hasMfaEnabledState.value) {
@@ -550,44 +782,13 @@ export const useAuthStore = defineStore('auth', () => {
         }
       }
 
-    } catch {
+    } catch (error) {
+      console.error("Init Auth Error", error);
       logout()
     }
   }
 
-  async function logout() {
-    try {
-      if (token.value) await apolloClient.mutate({ mutation: LOGOUT_MUTATION })
-    } catch (error) { console.warn('Logout hatası', error) }
-    finally {
-      user.value = null
-      token.value = null
-
-      clearActiveTenant()
-      availableTenants.value = []
-      localStorage.removeItem('proteus_available_tenants')
-
-      tenantId.value = null
-      permissions.value = null
-      isMfaRequired.value = false
-      isMfaVerified.value = false
-      totpDevices.value = []
-      hasMfaEnabledState.value = false
-
-      localStorage.removeItem('proteus_access_token')
-      localStorage.removeItem('proteus_refresh_token')
-      localStorage.removeItem('proteus_tenant_id')
-      localStorage.removeItem('proteus_mfa_enabled')
-
-      try {
-        await apolloClient.resetStore()
-      } catch {
-        await apolloClient.clearStore()
-      }
-      router.push('/login')
-      toast.add('Başarıyla çıkış yapıldı.', 'info')
-    }
-  }
+  // --- HELPERS ---
 
   function setSession(accessToken, refreshToken, tId) {
     token.value = accessToken
@@ -600,23 +801,54 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function setActiveTenant(tenant) {
+    currentTenant.value = tenant
+    tenantId.value = tenant.id
+    localStorage.setItem('proteus_tenant_id', tenant.id)
+    localStorage.setItem('proteus_current_tenant', JSON.stringify(tenant))
+  }
+
+  function clearActiveTenant() {
+    currentTenant.value = null
+    tenantId.value = null
+    localStorage.removeItem('proteus_tenant_id')
+    localStorage.removeItem('proteus_current_tenant')
+  }
+
   return {
+    // State
     user,
     token,
     tenantId,
     currentTenant,
     availableTenants,
+    roles,
+    requiresPasswordChange,
     permissions,
     isMfaRequired,
     isMfaVerified,
     totpDevices,
+
+    // Getters
     isAuthenticated,
     hasMfaEnabled,
     hasTenant,
+
+    // Actions
     login,
     register,
     createTenant,
+    updateTenant,
     switchTenant,
+
+    // User & Roles
+    fetchTenantUsers,
+    removeUserFromTenant,
+    fetchRoles,
+    inviteUser,
+    acceptInvite,
+
+    // Profile & Security
     sendPasswordResetEmail,
     resetPassword,
     updateProfile,

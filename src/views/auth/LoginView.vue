@@ -132,8 +132,8 @@
 <script setup>
 import { ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
-import { Sun, Moon, Loader2, ShieldCheck, KeyRound } from 'lucide-vue-next'; // KeyRound eklendi
+import { useRoute, useRouter } from 'vue-router';
+import { Sun, Moon, Loader2, ShieldCheck, KeyRound } from 'lucide-vue-next';
 import { useThemeStore } from '@/stores/theme';
 import { useAuthStore } from '@/stores/auth';
 import AppInput from '@/components/forms/AppInput.vue';
@@ -143,6 +143,7 @@ import QRCode from 'qrcode';
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const { locale } = useI18n()
 
 // Form State
@@ -181,7 +182,8 @@ const handleLogin = async () => {
         } else if (result.status === 'MFA_SETUP') {
             await startForcedSetup()
         } else {
-            router.push('/')
+            const redirectPath = route.query.redirect || '/'
+            router.push(redirectPath)
         }
     }
 }
@@ -209,7 +211,8 @@ const verifyMfa = async () => {
 
     if (success) {
         showVerifyModal.value = false
-        router.push('/')
+        const redirectPath = route.query.redirect || '/'
+        router.push(redirectPath)
     } else {
         otpCode.value = new Array(6).fill('')
         otpInputs.value[0]?.focus()
@@ -236,7 +239,8 @@ const completeSetup = async () => {
 
     if (success) {
         showSetupModal.value = false
-        router.push('/')
+        const redirectPath = route.query.redirect || '/'
+        router.push(redirectPath)
     } else {
         setupVerifyCode.value = ''
     }
