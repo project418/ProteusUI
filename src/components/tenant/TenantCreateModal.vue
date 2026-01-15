@@ -94,9 +94,11 @@ import { useAuthStore } from '@/stores/auth';
 import { Check, Layers, Loader2 } from 'lucide-vue-next';
 import AppModal from '@/components/ui/AppModal.vue';
 import AppInput from '@/components/forms/AppInput.vue';
+import { useI18n } from 'vue-i18n';
 
 const store = useSidebarStore();
 const authStore = useAuthStore();
+const { t: $t } = useI18n();
 
 const step = ref(1);
 const selectedPlanId = ref('free');
