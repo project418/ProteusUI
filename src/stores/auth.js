@@ -4,6 +4,7 @@ import { apolloClient } from '@/plugins/apollo'
 import gql from 'graphql-tag'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/toast'
+import { AuthStorage } from '@/utils/auth-storage'
 
 // --- GRAPHQL MUTATIONS & QUERIES ---
 
@@ -268,13 +269,14 @@ export const useAuthStore = defineStore('auth', () => {
   const toast = useToastStore()
 
   // --- STATE ---
+  // Initialize state from AuthStorage to persist session across reloads
   const user = ref(null)
-  const token = ref(localStorage.getItem('proteus_access_token') || null)
+  const token = ref(AuthStorage.getToken() || null)
 
   // Tenant State
-  const tenantId = ref(localStorage.getItem('proteus_tenant_id') || null)
-  const currentTenant = ref(JSON.parse(localStorage.getItem('proteus_current_tenant') || 'null'))
-  const availableTenants = ref(JSON.parse(localStorage.getItem('proteus_available_tenants') || '[]'))
+  const tenantId = ref(AuthStorage.getTenantId() || null)
+  const currentTenant = ref(AuthStorage.getCurrentTenant() || null)
+  const availableTenants = ref(AuthStorage.getAvailableTenants() || [])
   const roles = ref([])
 
   // Permissions & MFA State
@@ -282,7 +284,7 @@ export const useAuthStore = defineStore('auth', () => {
   const permissions = ref(null)
   const isMfaRequired = ref(false)
   const isMfaVerified = ref(false)
-  const hasMfaEnabledState = ref(localStorage.getItem('proteus_mfa_enabled') === 'true')
+  const hasMfaEnabledState = ref(AuthStorage.getMfaEnabled())
   const totpDevices = ref([])
 
   // --- GETTERS ---
@@ -302,10 +304,11 @@ export const useAuthStore = defineStore('auth', () => {
 
       const result = data.auth.login
 
+      // Store tokens and tenant info in AuthStorage
       setSession(result.accessToken, result.refreshToken, null)
 
       hasMfaEnabledState.value = result.mfaEnabled
-      localStorage.setItem('proteus_mfa_enabled', result.mfaEnabled)
+      AuthStorage.setMfaEnabled(result.mfaEnabled)
 
       user.value = result.user
       requiresPasswordChange.value = result.requiresPasswordChange || false
@@ -313,7 +316,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Tenant Management
       availableTenants.value = result.availableTenants || []
-      localStorage.setItem('proteus_available_tenants', JSON.stringify(availableTenants.value))
+      AuthStorage.setAvailableTenants(availableTenants.value)
 
       if (result.tenant) {
         setActiveTenant(result.tenant)
@@ -389,14 +392,14 @@ export const useAuthStore = defineStore('auth', () => {
         await apolloClient.mutate({ mutation: LOGOUT_MUTATION })
       }
     } catch (error) {
-      console.warn('Logout hatası', error)
+      console.warn('Logout error', error)
     } finally {
+      // Reset local state
       user.value = null
       token.value = null
 
       clearActiveTenant()
       availableTenants.value = []
-      localStorage.removeItem('proteus_available_tenants')
 
       tenantId.value = null
       permissions.value = null
@@ -405,11 +408,10 @@ export const useAuthStore = defineStore('auth', () => {
       totpDevices.value = []
       hasMfaEnabledState.value = false
 
-      localStorage.removeItem('proteus_access_token')
-      localStorage.removeItem('proteus_refresh_token')
-      localStorage.removeItem('proteus_tenant_id')
-      localStorage.removeItem('proteus_mfa_enabled')
+      // Clear storage
+      AuthStorage.clearSession()
 
+      // Reset Apollo Store
       try {
         await apolloClient.resetStore()
       } catch {
@@ -432,7 +434,7 @@ export const useAuthStore = defineStore('auth', () => {
       const newTenant = data.auth.createOwnTenant
 
       availableTenants.value.push(newTenant)
-      localStorage.setItem('proteus_available_tenants', JSON.stringify(availableTenants.value))
+      AuthStorage.setAvailableTenants(availableTenants.value)
 
       await switchTenant(newTenant.id)
 
@@ -456,13 +458,13 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (currentTenant.value && currentTenant.value.id === updated.id) {
         currentTenant.value.name = updated.name
-        localStorage.setItem('proteus_current_tenant', JSON.stringify(currentTenant.value))
+        AuthStorage.setCurrentTenant(currentTenant.value)
       }
 
       const idx = availableTenants.value.findIndex(t => t.id === updated.id)
       if (idx !== -1) {
         availableTenants.value[idx].name = updated.name
-        localStorage.setItem('proteus_available_tenants', JSON.stringify(availableTenants.value))
+        AuthStorage.setAvailableTenants(availableTenants.value)
       }
 
       toast.add('Organizasyon bilgileri güncellendi.', 'success')
@@ -712,7 +714,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
 
         hasMfaEnabledState.value = true
-        localStorage.setItem('proteus_mfa_enabled', 'true')
+        AuthStorage.setMfaEnabled(true)
 
         isMfaVerified.value = true
         isMfaRequired.value = false
@@ -748,7 +750,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (totpDevices.value.filter(d => d.verified).length === 0) {
         hasMfaEnabledState.value = false
-        localStorage.setItem('proteus_mfa_enabled', 'false')
+        AuthStorage.setMfaEnabled(false)
       }
       return true
     } catch (error) {
@@ -770,7 +772,7 @@ export const useAuthStore = defineStore('auth', () => {
         totpDevices.value = data.auth.listTotpDevices
       }
     } catch (error) {
-      console.error('MFA cihazları çekilemedi:', error)
+      console.error('Failed to fetch MFA devices:', error)
     }
   }
 
@@ -792,7 +794,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         if (data.auth.myTenants) {
           availableTenants.value = data.auth.myTenants
-          localStorage.setItem('proteus_available_tenants', JSON.stringify(availableTenants.value))
+          AuthStorage.setAvailableTenants(availableTenants.value)
 
           if (!currentTenant.value && availableTenants.value.length > 0) {
             setActiveTenant(availableTenants.value[0])
@@ -816,25 +818,27 @@ export const useAuthStore = defineStore('auth', () => {
 
   function setSession(accessToken, refreshToken, tId) {
     token.value = accessToken
-    localStorage.setItem('proteus_access_token', accessToken)
-    localStorage.setItem('proteus_refresh_token', refreshToken)
+    AuthStorage.setToken(accessToken)
+    AuthStorage.setRefreshToken(refreshToken)
 
     if (tId) {
       tenantId.value = tId
-      localStorage.setItem('proteus_tenant_id', tId)
+      AuthStorage.setTenantId(tId)
     }
   }
 
   function setActiveTenant(tenant) {
     currentTenant.value = tenant
     tenantId.value = tenant.id
-    localStorage.setItem('proteus_tenant_id', tenant.id)
-    localStorage.setItem('proteus_current_tenant', JSON.stringify(tenant))
+    AuthStorage.setTenantId(tenant.id)
+    AuthStorage.setCurrentTenant(tenant)
   }
 
   function clearActiveTenant() {
     currentTenant.value = null
     tenantId.value = null
+    // We rely on AuthStorage.clearSession() during logout,
+    // but explicit removal is possible if needed for tenant context switching only.
     localStorage.removeItem('proteus_tenant_id')
     localStorage.removeItem('proteus_current_tenant')
   }

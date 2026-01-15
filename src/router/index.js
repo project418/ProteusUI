@@ -90,32 +90,32 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  if (!authStore.token && localStorage.getItem('proteus_access_token')) {
-    authStore.token = localStorage.getItem('proteus_access_token')
-    const savedTenants = localStorage.getItem('proteus_available_tenants');
-    if (savedTenants) {
-      authStore.availableTenants = JSON.parse(savedTenants);
-    }
-  }
+  // Note: We removed the manual localStorage re-hydration block here.
+  // The Auth Store now initializes its state automatically from AuthStorage.
 
   const isAuthenticated = authStore.isAuthenticated
 
+  // 1. Check for protected routes
   if (to.meta.requiresAuth && !isAuthenticated) {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
 
+  // 2. Check for guest-only routes (like login/register)
   if (to.meta.guestOnly && isAuthenticated) {
     return next({ name: 'home' })
   }
 
+  // 3. Tenant & Onboarding Check
   if (isAuthenticated) {
     const hasTenants = authStore.availableTenants && authStore.availableTenants.length > 0;
 
+    // If user has no tenants, force them to onboarding (unless they are already there or joining one)
     if (!hasTenants) {
       if (to.name !== 'onboarding' && to.name !== 'profile' && to.name !== 'join-tenant') {
         return next({ name: 'onboarding' });
       }
     } else {
+      // If user has tenants but tries to access onboarding, redirect to home
       if (to.name === 'onboarding') {
         return next({ name: 'home' });
       }

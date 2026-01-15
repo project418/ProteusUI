@@ -103,7 +103,7 @@
                 </button>
               </div>
 
-              <div v-if="setupData" class="p-6 bg-card border border-line rounded-2xl space-y-6 animate-in slide-in-from-top-2 border-l-4 border-l-txt-main">
+              <div v-if="setupData" class="p-6 bg-card border border-line rounded-2xl space-y-6 animate-in slide-in-from-top-2">
                 <div class="flex justify-between items-start">
                   <h4 class="text-sm font-bold text-txt-main">Yeni Cihaz Tanımlama: <span class="text-txt-muted">{{ newDeviceName }}</span></h4>
                   <button @click="setupData = null" class="text-txt-muted hover:text-rose-500 transition-colors">
@@ -398,8 +398,7 @@ onMounted(() => {
 });
 
 const openSetupModal = () => {
-  const randomSuffix = Math.floor(Math.random() * 1000);
-  newDeviceName.value = `Cihaz-${randomSuffix}`;
+  newDeviceName.value = `device-${Date.now()}`;
   showAddDeviceModal.value = true;
 };
 
