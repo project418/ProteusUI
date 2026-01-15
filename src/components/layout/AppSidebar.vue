@@ -9,31 +9,50 @@
     <div class="relative h-14 mb-6 border-b border-line">
       <AppDropdown :isCollapsed="sidebarStore.isCollapsed" position="bottom">
         <template #trigger>
-          <div :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'justify-between px-2']" class="w-full flex items-center py-2 hover:bg-main/50 rounded-lg border border-transparent transition-all">
+          <div :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'justify-between px-2']" class="w-full flex items-center py-2 hover:bg-main/50 rounded-lg border border-transparent transition-all cursor-pointer group">
             <div class="flex items-center gap-2.5 min-w-0">
-              <div class="w-6 h-6 shrink-0 bg-main border border-line rounded flex items-center justify-center shadow-sm">
-                <div class="w-3 h-3 border-[1.5px] border-txt-main rounded-full opacity-90"></div>
+              <div class="w-6 h-6 shrink-0 rounded flex items-center justify-center shadow-sm text-[10px] font-bold text-white transition-colors" :class="currentTenantColor">
+                {{ currentTenantInitials }}
               </div>
-              <span v-if="!sidebarStore.isCollapsed" class="text-sm font-semibold text-txt-main tracking-tight truncate">Proteus</span>
+
+              <span v-if="!sidebarStore.isCollapsed" class="text-sm font-semibold text-txt-main tracking-tight truncate">
+                {{ currentTenantName }}
+              </span>
             </div>
-            <ChevronDown v-if="!sidebarStore.isCollapsed" class="w-4 h-4 text-txt-muted shrink-0" />
+            <ChevronDown v-if="!sidebarStore.isCollapsed" class="w-4 h-4 text-txt-muted shrink-0 group-hover:text-txt-main transition-colors" />
           </div>
         </template>
 
-        <template #content>
+        <template #content="{ close }">
           <div class="space-y-1">
-            <button class="w-full flex items-center gap-3 p-2 hover:bg-side rounded-lg text-sm text-txt-main cursor-pointer">
-              <div class="w-5 h-5 bg-red-500 rounded flex items-center justify-center text-[10px] font-bold text-white">A1</div>
-              App 1
+            <div v-if="authStore.availableTenants.length === 0" class="px-2 py-2 text-xs text-txt-muted italic text-center">
+              Henüz bir organizasyonunuz yok.
+            </div>
+
+            <button v-for="tenant in authStore.availableTenants" :key="tenant.id" @click="handleSwitchTenant(tenant.id); close()" class="w-full flex items-center gap-3 p-2 rounded-lg text-sm transition-all text-left group" :class="authStore.currentTenant?.id === tenant.id ? 'bg-main shadow-sm text-txt-main border border-line/50' : 'hover:bg-side text-txt-muted hover:text-txt-main border border-transparent'">
+              <div class="w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold text-white shrink-0" :class="getTenantColor(tenant.name)">
+                {{ getInitials(tenant.name) }}
+              </div>
+              <span class="truncate flex-1">{{ tenant.name }}</span>
+              <Check v-if="authStore.currentTenant?.id === tenant.id" class="w-3.5 h-3.5 text-txt-main" />
             </button>
           </div>
+
+          <div class="h-px bg-line my-1.5 mx-1"></div>
+
+          <button @click="openCreateTenantModal(); close()" class="w-full flex items-center gap-3 p-2 hover:bg-main hover:shadow-sm rounded-lg text-sm text-txt-muted hover:text-txt-main cursor-pointer transition-all group border border-transparent hover:border-line/50">
+            <div class="w-5 h-5 border border-dashed border-txt-muted/40 rounded flex items-center justify-center group-hover:border-txt-main group-hover:bg-txt-main group-hover:text-main transition-all">
+              <Plus class="w-3 h-3" />
+            </div>
+            <span class="font-medium">Yeni Organizasyon</span>
+          </button>
         </template>
       </AppDropdown>
     </div>
 
     <nav class="flex-1 space-y-1 mb-8">
-      <router-link v-for="item in menuItems" :key="item.label" :to="item.path" @click="sidebarStore.isMobileOpen = false" active-class="bg-main text-txt-main" :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-3']" class="flex items-center gap-3 py-2 rounded-lg text-sm font-medium transition-all group text-txt-muted hover:text-txt-main hover:bg-main/50">
-        <component :is="item.icon" class="w-5 h-5 shrink-0 opacity-70 group-hover:opacity-100" />
+      <router-link v-for="item in menuItems" :key="item.label" :to="item.path" @click="sidebarStore.isMobileOpen = false" active-class="bg-main text-txt-main shadow-sm border-line" :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-3']" class="flex items-center gap-3 py-2 rounded-lg text-sm font-medium transition-all group text-txt-muted hover:text-txt-main hover:bg-main/50 border border-transparent">
+        <component :is="item.icon" class="w-5 h-5 shrink-0 opacity-70 group-hover:opacity-100 transition-opacity" />
         <span v-if="!sidebarStore.isCollapsed" class="truncate">{{ $t(item.label) }}</span>
       </router-link>
     </nav>
@@ -41,29 +60,29 @@
     <div class="mt-auto pt-2 border-t border-line">
       <AppDropdown :isCollapsed="sidebarStore.isCollapsed" position="top">
         <template #trigger>
-          <div :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-2']" class="w-full flex items-center gap-3 py-2 hover:bg-main/50 rounded-xl transition-all group cursor-pointer">
-            <img :src="displayAvatar" class="w-8 h-8 rounded-lg border border-line shrink-0" alt="Avatar" />
+          <div :class="[sidebarStore.isCollapsed ? 'justify-center px-0' : 'px-2']" class="w-full flex items-center gap-3 py-2 hover:bg-main/50 rounded-xl transition-all group cursor-pointer border border-transparent hover:border-line/50">
+            <img :src="displayAvatar" class="w-8 h-8 rounded-lg border border-line shrink-0 object-cover" alt="Avatar" />
 
             <div v-if="!sidebarStore.isCollapsed" class="flex-1 text-left min-w-0">
-              <p class="text-sm font-semibold text-txt-main truncate">{{ displayName }}</p>
-              <p class="text-[11px] text-txt-muted truncate font-medium">{{ userEmail }}</p>
+              <p class="text-sm font-semibold text-txt-main truncate leading-tight">{{ displayName }}</p>
+              <p class="text-[10px] text-txt-muted truncate font-medium mt-0.5">{{ userEmail }}</p>
             </div>
-            <ChevronUp v-if="!sidebarStore.isCollapsed" class="w-4 h-4 text-txt-muted shrink-0" />
+            <ChevronUp v-if="!sidebarStore.isCollapsed" class="w-4 h-4 text-txt-muted shrink-0 group-hover:text-txt-main transition-colors" />
           </div>
         </template>
 
         <template #content="{ close }">
           <div class="p-1 bg-side rounded-xl flex mb-2 border border-line">
-            <button @click="themeStore.isDark = false" :class="[!themeStore.isDark ? 'bg-card shadow-sm text-txt-main' : 'text-txt-muted']" class="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer">
+            <button @click="themeStore.isDark = false" :class="[!themeStore.isDark ? 'bg-card shadow-sm text-txt-main' : 'text-txt-muted hover:text-txt-main']" class="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer">
               <Sun class="w-3.5 h-3.5" /> Light
             </button>
-            <button @click="themeStore.isDark = true" :class="[themeStore.isDark ? 'bg-card shadow-sm text-txt-main' : 'text-txt-muted']" class="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer">
+            <button @click="themeStore.isDark = true" :class="[themeStore.isDark ? 'bg-card shadow-sm text-txt-main' : 'text-txt-muted hover:text-txt-main']" class="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer">
               <Moon class="w-3.5 h-3.5" /> Dark
             </button>
           </div>
 
           <div class="space-y-0.5 mb-2">
-            <button v-for="lang in [{ id: 'en', n: 'English' }, { id: 'tr', n: 'Türkçe' }]" :key="lang.id" @click="setLanguage(lang.id)" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer" :class="[locale === lang.id ? 'bg-main text-txt-main' : 'text-txt-muted hover:bg-side']">
+            <button v-for="lang in [{ id: 'en', n: 'English' }, { id: 'tr', n: 'Türkçe' }]" :key="lang.id" @click="setLanguage(lang.id)" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer group" :class="[locale === lang.id ? 'bg-main text-txt-main border border-line/50' : 'text-txt-muted hover:bg-side border border-transparent']">
               <span>{{ lang.n }}</span>
               <Check v-if="locale === lang.id" class="w-3.5 h-3.5" />
             </button>
@@ -71,11 +90,11 @@
 
           <div class="h-px bg-line mx-1 mb-1"></div>
 
-          <button @click="redirectToAccount(); sidebarStore.isMobileOpen = false; close()" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-side rounded-lg text-xs text-txt-main cursor-pointer">
+          <button @click="redirectToAccount(); sidebarStore.isMobileOpen = false; close()" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-side rounded-lg text-xs font-medium text-txt-main cursor-pointer transition-colors">
             <UserCircle class="w-4 h-4 opacity-60" /> {{ $t('common.account') }}
           </button>
 
-          <button @click="openLogoutModal(); close()" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-red-500/10 rounded-lg text-xs text-red-500 cursor-pointer">
+          <button @click="openLogoutModal(); close()" class="w-full flex items-center gap-3 px-3 py-2 hover:bg-red-500/10 rounded-lg text-xs font-medium text-red-500 cursor-pointer transition-colors">
             <LogOut class="w-4 h-4" /> {{ $t('auth.logout') }}
           </button>
         </template>
@@ -111,7 +130,7 @@ import { useAuthStore } from '@/stores/auth';
 import {
   Home, Calendar, ShoppingCart, Settings,
   ChevronDown, ChevronUp, UserCircle, LogOut, Sun, Moon,
-  Check,
+  Check, Plus
 } from 'lucide-vue-next';
 import AppDropdown from '@/components/ui/AppDropdown.vue';
 import AppModal from '@/components/ui/AppModal.vue';
@@ -125,23 +144,59 @@ const authStore = useAuthStore();
 // Modal State
 const showLogoutModal = ref(false);
 
-const userEmail = computed(() => authStore.user?.email || 'user@proteus.com');
+// Tenant Computed Properties
+const currentTenantName = computed(() => authStore.currentTenant?.name || 'Organizasyon Seç');
+const currentTenantInitials = computed(() => getInitials(currentTenantName.value));
+const currentTenantColor = computed(() => authStore.currentTenant ? getTenantColor(authStore.currentTenant.name) : 'bg-gray-500');
 
+// User Computed Properties
+const userEmail = computed(() => authStore.user?.email || 'user@proteus.com');
 const displayName = computed(() => {
   if (authStore.user?.firstName && authStore.user?.lastName) {
     return `${authStore.user.firstName} ${authStore.user.lastName}`;
   }
   return authStore.user?.email?.split('@')[0] || 'Kullanıcı';
 });
-
 const displayAvatar = computed(() => {
   if (authStore.user?.avatar) return authStore.user.avatar;
   return `https://ui-avatars.com/api/?name=${displayName.value}&background=333&color=fff`;
 });
 
+// Helpers
+const getInitials = (name) => {
+  if (!name) return '??';
+  const parts = name.trim().split(' ');
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const getTenantColor = (name) => {
+  const colors = [
+    'bg-blue-500', 'bg-emerald-500', 'bg-violet-500',
+    'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-indigo-500'
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+};
+
 const setLanguage = (lang) => {
   locale.value = lang;
   localStorage.setItem('lang', lang);
+};
+
+// Tenant Actions
+const handleSwitchTenant = async (tenantId) => {
+  if (authStore.currentTenant?.id === tenantId) return;
+
+  await authStore.switchTenant(tenantId);
+};
+
+const openCreateTenantModal = () => {
+  sidebarStore.isTenantModalOpen = true;
 };
 
 const menuItems = [

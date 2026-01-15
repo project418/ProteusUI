@@ -4,6 +4,7 @@ import { ref } from 'vue'
 export const useSidebarStore = defineStore('sidebar', () => {
   const isCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
   const isMobileOpen = ref(false)
+  const isTenantModalOpen = ref(false)
 
   const toggleSidebar = () => {
     isCollapsed.value = !isCollapsed.value
@@ -14,5 +15,11 @@ export const useSidebarStore = defineStore('sidebar', () => {
     isMobileOpen.value = !isMobileOpen.value
   }
 
-  return { isCollapsed, isMobileOpen, toggleSidebar, toggleMobileMenu }
+  return {
+    isCollapsed,
+    isMobileOpen,
+    isTenantModalOpen,
+    toggleSidebar,
+    toggleMobileMenu
+  }
 })

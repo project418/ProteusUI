@@ -32,6 +32,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/onboarding',
+      name: 'onboarding',
+      component: () => import('../views/OnboardingView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/orders',
       name: 'orders',
       component: () => import('../views/OrdersView.vue'),
@@ -78,6 +84,10 @@ router.beforeEach(async (to, from, next) => {
 
   if (!authStore.token && localStorage.getItem('proteus_access_token')) {
     authStore.token = localStorage.getItem('proteus_access_token')
+    const savedTenants = localStorage.getItem('proteus_available_tenants');
+    if (savedTenants) {
+      authStore.availableTenants = JSON.parse(savedTenants);
+    }
   }
 
   const isAuthenticated = authStore.isAuthenticated
@@ -88,6 +98,20 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.meta.guestOnly && isAuthenticated) {
     return next({ name: 'home' })
+  }
+
+  if (isAuthenticated) {
+    const hasTenants = authStore.availableTenants && authStore.availableTenants.length > 0;
+
+    if (!hasTenants) {
+      if (to.name !== 'onboarding' && to.name !== 'profile') {
+        return next({ name: 'onboarding' });
+      }
+    } else {
+      if (to.name === 'onboarding') {
+        return next({ name: 'home' });
+      }
+    }
   }
 
   next()

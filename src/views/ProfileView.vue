@@ -230,7 +230,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
-import { User, Camera, ShieldCheck, Bell, Globe, Plus, X, Trash2, RefreshCw, Loader2, Info } from 'lucide-vue-next';
+import { User, Camera, ShieldCheck, Plus, X, Trash2, RefreshCw, Loader2, Info } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import QRCode from 'qrcode';
