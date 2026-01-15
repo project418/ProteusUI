@@ -157,16 +157,20 @@ const UPDATE_ME_MUTATION = gql`
   mutation UpdateMe($input: UpdateUserInput!) {
     auth {
       updateMe(input: $input) {
-        id
-        email
-        firstName
-        lastName
-        title
-        phone
-        countryCode
-        timezone
-        language
-        avatar
+        user {
+          id
+          email
+          firstName
+          lastName
+          title
+          phone
+          countryCode
+          timezone
+          language
+          avatar
+        }
+        accessToken
+        refreshToken
       }
     }
   }
@@ -319,13 +323,7 @@ export const useAuthStore = defineStore('auth', () => {
         clearActiveTenant()
       }
 
-      // Password Change Enforcement
-      if (requiresPasswordChange.value) {
-        toast.add('Güvenliğiniz için şifrenizi değiştirmeniz gerekmektedir.', 'warning')
-        return { success: true, status: 'PASSWORD_CHANGE_REQUIRED' }
-      }
-
-      // MFA Handling
+      // MFA Handling - Prioritize MFA check over Password Change
       if (result.requiresMfa) {
         isMfaRequired.value = true
         isMfaVerified.value = false
@@ -337,6 +335,12 @@ export const useAuthStore = defineStore('auth', () => {
           toast.add('Güvenlik gereği 2FA kurulumu yapmanız gerekmektedir.', 'info')
           return { success: true, status: 'MFA_SETUP' }
         }
+      }
+
+      // Password Change Enforcement - Check after MFA checks are passed (or not required)
+      if (requiresPasswordChange.value) {
+        toast.add('Güvenliğiniz için şifrenizi değiştirmeniz gerekmektedir.', 'warning')
+        return { success: true, status: 'PASSWORD_CHANGE_REQUIRED' }
       }
 
       isMfaVerified.value = true
@@ -560,7 +564,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (data.auth.acceptInvite) {
         toast.add('Organizasyona başarıyla katıldınız.', 'success')
-        
+
         await initAuth()
         return true
       }
@@ -619,8 +623,14 @@ export const useAuthStore = defineStore('auth', () => {
         variables: { input }
       })
 
-      const updatedUser = data.auth.updateMe
-      user.value = { ...user.value, ...updatedUser }
+      const result = data.auth.updateMe
+
+      user.value = { ...user.value, ...result.user }
+
+      if (result.accessToken && result.refreshToken) {
+        setSession(result.accessToken, result.refreshToken, tenantId.value)
+        requiresPasswordChange.value = false
+      }
 
       if (input.password) {
         requiresPasswordChange.value = false
@@ -655,14 +665,21 @@ export const useAuthStore = defineStore('auth', () => {
         isMfaRequired.value = false
 
         fetchTotpDevices()
+
+        // Check password change AFTER MFA verification
+        if (requiresPasswordChange.value) {
+          toast.add('Güvenliğiniz için şifrenizi değiştirmeniz gerekmektedir.', 'warning')
+          return { success: true, status: 'PASSWORD_CHANGE_REQUIRED' }
+        }
+
         toast.add('Doğrulama başarılı.', 'success')
-        return true
+        return { success: true, status: 'SUCCESS' }
       }
-      return false
+      return { success: false, error: 'Doğrulama başarısız' }
     } catch (error) {
       console.error('Verify MFA error:', error)
       toast.add('Hatalı doğrulama kodu.', 'error')
-      return false
+      return { success: false, error: error.message }
     }
   }
 
@@ -701,14 +718,21 @@ export const useAuthStore = defineStore('auth', () => {
         isMfaRequired.value = false
 
         await fetchTotpDevices()
+
+        // Check password change AFTER TOTP Setup/Verify
+        if (requiresPasswordChange.value) {
+          toast.add('Güvenliğiniz için şifrenizi değiştirmeniz gerekmektedir.', 'warning')
+          return { success: true, status: 'PASSWORD_CHANGE_REQUIRED' }
+        }
+
         toast.add('2FA kurulumu başarıyla tamamlandı.', 'success')
-        return true
+        return { success: true, status: 'SUCCESS' }
       }
-      return false
+      return { success: false, error: 'Doğrulama başarısız' }
     } catch (error) {
       console.error('Verify TOTP Device error:', error)
       toast.add(error.message || 'Doğrulama hatası.', 'error')
-      return false
+      return { success: false, error: error.message }
     }
   }
 

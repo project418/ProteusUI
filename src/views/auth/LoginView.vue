@@ -94,7 +94,7 @@
                 </div>
 
                 <button @click="verifyMfa" :disabled="isVerifying || otpCode.join('').length !== 6" class="w-full bg-txt-main text-main py-2.5 rounded-xl font-bold text-xs hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                    {{ isVerifying ? 'Doğrulanıyor...' : 'Doğrula ve Giriş Yap' }}
+                    {{ isVerifying ? 'Doğrulanıyor...' : 'Doğrula ve Devam Et' }}
                 </button>
             </div>
         </AppModal>
@@ -126,6 +126,33 @@
                 </div>
             </div>
         </AppModal>
+
+        <AppModal :show="showForcePasswordChangeModal" title="Şifre Değişikliği Gerekli" size="sm" :closeOnBackdrop="false" @close="() => { }">
+            <div class="space-y-6">
+                <div class="text-center space-y-2">
+                    <div class="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto">
+                        <KeyRound class="w-6 h-6" />
+                    </div>
+                    <p class="text-sm text-txt-muted">
+                        Güvenliğiniz için şifrenizi güncellemeniz gerekmektedir.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="space-y-1.5">
+                        <AppInput v-model="newPassword" label="Yeni Şifre" type="password" placeholder="••••••••" />
+                        <p class="text-[10px] text-txt-muted">En az 6 karakter olmalıdır.</p>
+                    </div>
+                    <AppInput v-model="confirmNewPassword" label="Yeni Şifre (Tekrar)" type="password" placeholder="••••••••" />
+
+                    <button @click="handleForcePasswordChange" :disabled="isChangingPassword || !newPassword || !confirmNewPassword" class="w-full bg-txt-main text-main py-2.5 rounded-xl font-bold text-xs hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
+                        <Loader2 v-if="isChangingPassword" class="w-3.5 h-3.5 animate-spin" />
+                        {{ isChangingPassword ? 'Güncelleniyor...' : 'Şifreyi Güncelle ve Devam Et' }}
+                    </button>
+                </div>
+            </div>
+        </AppModal>
+
     </div>
 </template>
 
@@ -136,12 +163,14 @@ import { useRoute, useRouter } from 'vue-router';
 import { Sun, Moon, Loader2, ShieldCheck, KeyRound } from 'lucide-vue-next';
 import { useThemeStore } from '@/stores/theme';
 import { useAuthStore } from '@/stores/auth';
+import { useToastStore } from '@/stores/toast';
 import AppInput from '@/components/forms/AppInput.vue';
 import AppModal from '@/components/ui/AppModal.vue';
 import QRCode from 'qrcode';
 
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
+const toast = useToastStore()
 const router = useRouter()
 const route = useRoute()
 const { locale } = useI18n()
@@ -155,10 +184,16 @@ const isLoading = ref(false)
 const showVerifyModal = ref(false)
 const showSetupModal = ref(false)
 const showForgotModal = ref(false)
+const showForcePasswordChangeModal = ref(false)
 
 // Forgot Password Logic
 const forgotEmail = ref('')
 const isSendingReset = ref(false)
+
+// Force Password Change Logic
+const newPassword = ref('')
+const confirmNewPassword = ref('')
+const isChangingPassword = ref(false)
 
 // Verify Logic (OTP Input)
 const isVerifying = ref(false)
@@ -170,6 +205,7 @@ const setupData = ref(null)
 const qrCodeUrl = ref('')
 const setupVerifyCode = ref('')
 
+// --- Login Process ---
 const handleLogin = async () => {
     isLoading.value = true
     const result = await authStore.login(email.value, password.value)
@@ -181,6 +217,8 @@ const handleLogin = async () => {
             nextTick(() => otpInputs.value[0]?.focus())
         } else if (result.status === 'MFA_SETUP') {
             await startForcedSetup()
+        } else if (result.status === 'PASSWORD_CHANGE_REQUIRED') {
+            showForcePasswordChangeModal.value = true
         } else {
             const redirectPath = route.query.redirect || '/'
             router.push(redirectPath)
@@ -188,31 +226,51 @@ const handleLogin = async () => {
     }
 }
 
-const handleForgotPassword = async () => {
-    if (!forgotEmail.value) return;
+// --- Password Change Process ---
+const handleForcePasswordChange = async () => {
+    if (newPassword.value !== confirmNewPassword.value) {
+        toast.add('Şifreler eşleşmiyor.', 'warning')
+        return
+    }
+    if (newPassword.value.length < 6) {
+        toast.add('Şifre en az 6 karakter olmalıdır.', 'warning')
+        return
+    }
 
-    isSendingReset.value = true;
-    const success = await authStore.sendPasswordResetEmail(forgotEmail.value);
-    isSendingReset.value = false;
+    isChangingPassword.value = true
+
+    const success = await authStore.updateProfile({
+        password: newPassword.value,
+        currentPassword: password.value
+    })
+
+    isChangingPassword.value = false
 
     if (success) {
-        showForgotModal.value = false;
-        forgotEmail.value = '';
+        showForcePasswordChangeModal.value = false
+        const redirectPath = route.query.redirect || '/'
+        router.push(redirectPath)
     }
 }
 
+// --- MFA Processes ---
 const verifyMfa = async () => {
     const code = otpCode.value.join('')
     if (code.length !== 6) return
 
     isVerifying.value = true
-    const success = await authStore.verifyMfa(code)
+    const result = await authStore.verifyMfa(code)
     isVerifying.value = false
 
-    if (success) {
-        showVerifyModal.value = false
-        const redirectPath = route.query.redirect || '/'
-        router.push(redirectPath)
+    if (result.success) {
+        if (result.status === 'PASSWORD_CHANGE_REQUIRED') {
+            showVerifyModal.value = false
+            showForcePasswordChangeModal.value = true
+        } else {
+            showVerifyModal.value = false
+            const redirectPath = route.query.redirect || '/'
+            router.push(redirectPath)
+        }
     } else {
         otpCode.value = new Array(6).fill('')
         otpInputs.value[0]?.focus()
@@ -234,19 +292,38 @@ const completeSetup = async () => {
     if (!setupData.value) return
 
     isVerifying.value = true
-    const success = await authStore.verifyTotpDevice(setupData.value.deviceName, setupVerifyCode.value)
+    const result = await authStore.verifyTotpDevice(setupData.value.deviceName, setupVerifyCode.value)
     isVerifying.value = false
 
-    if (success) {
-        showSetupModal.value = false
-        const redirectPath = route.query.redirect || '/'
-        router.push(redirectPath)
+    if (result.success) {
+        if (result.status === 'PASSWORD_CHANGE_REQUIRED') {
+            showSetupModal.value = false
+            showForcePasswordChangeModal.value = true
+        } else {
+            showSetupModal.value = false
+            const redirectPath = route.query.redirect || '/'
+            router.push(redirectPath)
+        }
     } else {
         setupVerifyCode.value = ''
     }
 }
 
-// --- OTP Input Helper ---
+// --- Forgot Password ---
+const handleForgotPassword = async () => {
+    if (!forgotEmail.value) return;
+
+    isSendingReset.value = true;
+    const success = await authStore.sendPasswordResetEmail(forgotEmail.value);
+    isSendingReset.value = false;
+
+    if (success) {
+        showForgotModal.value = false;
+        forgotEmail.value = '';
+    }
+}
+
+// --- Helpers ---
 const handleOtpInput = (e, index) => {
     const val = e.target.value
     if (val && index < 5) otpInputs.value[index + 1]?.focus()
