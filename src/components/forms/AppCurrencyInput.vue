@@ -14,7 +14,6 @@
 </template>
 
 <script setup>
-// 'const props =' kısmını sildik çünkü script içinde props değişkeni kullanılmıyor.
 defineProps(['modelValue', 'label', 'currencySymbol', 'error']);
 const emit = defineEmits(['update:modelValue']);
 

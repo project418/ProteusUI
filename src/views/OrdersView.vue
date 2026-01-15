@@ -4,20 +4,20 @@
       <div class=" flex flex-col sm:flex-row sm:items-center justify-between mb-6 lg:mb-8 gap-4 shrink-0">
         <div class="flex items-center gap-4">
           <h1 class="text-[11px] font-bold text-txt-main uppercase tracking-[0.2em] border-l-2 border-txt-main pl-3">
-            Sipariş Yönetimi
+            {{ $t('orders.management') }}
           </h1>
           <span class="px-2 py-0.5 bg-side border border-line rounded text-[10px] font-bold text-txt-muted tabular-nums">
-            {{ filteredOrders.length }} KAYIT
+            {{ filteredOrders.length }} {{ $t('common.records').toUpperCase() }}
           </span>
         </div>
 
         <div class="flex items-center gap-3 w-full sm:w-auto">
           <div class="relative group flex-1 sm:flex-none">
             <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-txt-muted group-focus-within:text-txt-main transition-colors" />
-            <input v-model="searchQuery" type="text" placeholder="Hızlı ara..." class="w-full sm:w-48 lg:w-64 bg-card border border-line rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none transition-all focus:border-txt-main/30" />
+            <input v-model="searchQuery" type="text" :placeholder="$t('common.quickSearch')" class="w-full sm:w-48 lg:w-64 bg-card border border-line rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none transition-all focus:border-txt-main/30" />
           </div>
           <button @click="toggleCreate" class="bg-txt-main text-main px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 active:scale-95 transition-all shadow-sm">
-            Yeni
+            {{ $t('common.new') }}
           </button>
         </div>
       </div>
@@ -53,8 +53,10 @@ import AppDataTable from '@/components/ui/AppDataTable.vue'
 import OrderCreatePanel from './OrderCreatePanel.vue'
 import OrderDetailPanel from './OrderDetailPanel.vue'
 import { useToastStore } from '@/stores/toast'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToastStore()
+const { t: $t } = useI18n()
 const isLoading = ref(true)
 const selectedOrder = ref(null)
 const searchQuery = ref('')
@@ -65,11 +67,11 @@ const sortKey = ref('id')
 const sortOrder = ref('asc')
 
 const orderColumns = [
-  { label: 'Sipariş ID', key: 'id', sortable: true },
-  { label: 'Müşteri', key: 'customer', sortable: true },
-  { label: 'Tarih', key: 'date', sortable: true },
-  { label: 'Tutar', key: 'price', sortable: true },
-  { label: 'Durum', key: 'status', sortable: false },
+  { label: $t('orders.orderId'), key: 'id', sortable: true },
+  { label: $t('orders.customer'), key: 'customer', sortable: true },
+  { label: $t('orders.date'), key: 'date', sortable: true },
+  { label: $t('orders.amount'), key: 'price', sortable: true },
+  { label: $t('orders.status'), key: 'status', sortable: false },
 ]
 
 const statusConfig = {
@@ -112,14 +114,14 @@ const closePanels = () => {
 const handleAddNewOrder = (newRecord) => {
   orders.value.unshift(newRecord);
   isCreating.value = false;
-  toast.add('Yeni sipariş başarıyla oluşturuldu', 'success');
+  toast.add($t('toast.orderCreated'), 'success');
 }
 
 const handleSave = (updated) => {
   const idx = orders.value.findIndex(o => o.id === updated.id);
   if (idx !== -1) {
     orders.value[idx] = updated;
-    toast.add('Sipariş güncellendi', 'success');
+    toast.add($t('toast.orderUpdated'), 'success');
     selectedOrder.value = null;
   }
 }

@@ -1,23 +1,23 @@
 <template>
-    <AppModal :show="store.isTenantModalOpen" title="Organizasyon Oluştur" size="lg" @close="closeModal">
+    <AppModal :show="store.isTenantModalOpen" :title="$t('tenant.createOrganization')" size="lg" @close="closeModal">
         <div class="space-y-6">
 
             <div class="flex items-center justify-center mb-8">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors" :class="step >= 1 ? 'bg-txt-main text-main' : 'bg-side text-txt-muted'">1</div>
-                    <span class="text-xs font-bold uppercase tracking-widest" :class="step >= 1 ? 'text-txt-main' : 'text-txt-muted'">Plan Seçimi</span>
+                    <span class="text-xs font-bold uppercase tracking-widest" :class="step >= 1 ? 'text-txt-main' : 'text-txt-muted'">{{ $t('tenant.selectPlan') }}</span>
                 </div>
                 <div class="w-12 h-px bg-line mx-4"></div>
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors" :class="step >= 2 ? 'bg-txt-main text-main' : 'bg-side text-txt-muted'">2</div>
-                    <span class="text-xs font-bold uppercase tracking-widest" :class="step >= 2 ? 'text-txt-main' : 'text-txt-muted'">Detaylar</span>
+                    <span class="text-xs font-bold uppercase tracking-widest" :class="step >= 2 ? 'text-txt-main' : 'text-txt-muted'">{{ $t('tenant.details') }}</span>
                 </div>
             </div>
 
             <div v-if="step === 1" class="space-y-6 animate-in slide-in-from-right-4 duration-300">
                 <div class="text-center space-y-2">
-                    <h3 class="text-lg font-bold text-txt-main">Size uygun planı seçin</h3>
-                    <p class="text-sm text-txt-muted">İhtiyaçlarınıza göre ölçeklenen esnek fiyatlandırma.</p>
+                    <h3 class="text-lg font-bold text-txt-main">{{ $t('tenant.choosePlan') }}</h3>
+                    <p class="text-sm text-txt-muted">{{ $t('tenant.flexiblePricing') }}</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -26,14 +26,14 @@
                         plan.disabled ? 'opacity-50 pointer-events-none grayscale' : ''
                     ]">
                         <div v-if="plan.recommended" class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-txt-main text-main text-[10px] font-bold uppercase tracking-widest rounded-full">
-                            Önerilen
+                            {{ $t('tenant.recommended') }}
                         </div>
 
                         <div class="mb-4">
                             <h4 class="text-sm font-bold text-txt-main uppercase tracking-wider">{{ plan.name }}</h4>
                             <div class="mt-2 flex items-baseline gap-1">
                                 <span class="text-2xl font-black text-txt-main">{{ plan.price }}</span>
-                                <span class="text-[10px] text-txt-muted font-bold">/AY</span>
+                                <span class="text-[10px] text-txt-muted font-bold">{{ $t('tenant.perMonth') }}</span>
                             </div>
                         </div>
 
@@ -45,7 +45,7 @@
                         </ul>
 
                         <button class="w-full py-2 rounded-lg text-xs font-bold transition-colors" :class="selectedPlanId === plan.id ? 'bg-txt-main text-main' : 'bg-side text-txt-main hover:bg-txt-main/10'">
-                            {{ selectedPlanId === plan.id ? 'Seçildi' : 'Seç' }}
+                            {{ selectedPlanId === plan.id ? $t('tenant.selected') : $t('tenant.select') }}
                         </button>
                     </div>
                 </div>
@@ -57,16 +57,16 @@
                         <Layers class="w-5 h-5 text-txt-main" />
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-txt-muted uppercase tracking-wider">Seçilen Plan</p>
+                        <p class="text-xs font-bold text-txt-muted uppercase tracking-wider">{{ $t('tenant.selectedPlan') }}</p>
                         <p class="text-sm font-bold text-txt-main">{{ getSelectedPlanName }}</p>
                     </div>
-                    <button @click="step = 1" class="ml-auto text-xs font-bold text-txt-muted hover:text-txt-main underline">Değiştir</button>
+                    <button @click="step = 1" class="ml-auto text-xs font-bold text-txt-muted hover:text-txt-main underline">{{ $t('tenant.change') }}</button>
                 </div>
 
                 <div class="space-y-4">
-                    <AppInput v-model="tenantName" label="Organizasyon Adı" placeholder="Örn: Acme Inc." :error="error" autoFocus />
+                    <AppInput v-model="tenantName" :label="$t('tenant.organizationName')" :placeholder="$t('tenant.organizationNamePlaceholder')" :error="error" autoFocus />
                     <p class="text-xs text-txt-muted">
-                        Bu isim faturalarınızda ve ekip davetlerinde görünecektir.
+                        {{ $t('tenant.organizationNameDescription') }}
                     </p>
                 </div>
             </div>
@@ -76,11 +76,11 @@
         <template #footer>
             <div class="flex justify-between w-full">
                 <button v-if="step === 2" @click="step = 1" class="px-4 py-2 text-xs font-bold text-txt-muted hover:text-txt-main transition-colors">
-                    Geri Dön
+                    {{ $t('tenant.goBack') }}
                 </button>
                 <div v-else></div> <button @click="handleNext" :disabled="isLoading || (step === 1 && !selectedPlanId) || (step === 2 && !tenantName)" class="px-6 py-2 bg-txt-main text-main rounded-xl text-xs font-bold hover:opacity-90 active:scale-95 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin" />
-                    {{ step === 1 ? 'Devam Et' : (isLoading ? 'Oluşturuluyor...' : 'Tamamla') }}
+                    {{ step === 1 ? $t('tenant.continue') : (isLoading ? $t('tenant.creating') : $t('tenant.complete')) }}
                 </button>
             </div>
         </template>
@@ -164,7 +164,7 @@ const handleNext = async () => {
         if (result.success) {
             closeModal();
         } else {
-            error.value = result.error || 'Bir hata oluştu.';
+            error.value = result.error || $t('error.anErrorOccurred');
         }
     }
 };

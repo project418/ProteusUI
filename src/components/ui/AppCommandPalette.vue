@@ -7,7 +7,7 @@
         <div class="relative w-full max-w-2xl bg-card border border-line shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200">
           <div class="flex items-center px-4 py-4 border-b border-line gap-3">
             <Search class="w-5 h-5 text-txt-muted" />
-            <input ref="searchInput" v-model="query" type="text" placeholder="Ara..." class="flex-1 bg-transparent border-none outline-none text-base text-txt-main placeholder:text-txt-muted" @keydown.esc="close" @keydown.down="moveSelection(1)" @keydown.up="moveSelection(-1)" @keydown.enter="executeAction" />
+            <input ref="searchInput" v-model="query" type="text" :placeholder="$t('commandPalette.search')" class="flex-1 bg-transparent border-none outline-none text-base text-txt-main placeholder:text-txt-muted" @keydown.esc="close" @keydown.down="moveSelection(1)" @keydown.up="moveSelection(-1)" @keydown.enter="executeAction" />
             <div class="hidden sm:flex items-center gap-1 px-1.5 py-1 bg-side border border-line rounded text-[10px] font-bold text-txt-muted">
               <span>ESC</span>
             </div>
@@ -32,17 +32,17 @@
 
             <div v-if="filteredResults.length === 0" class="py-12 text-center">
               <SearchX class="w-8 h-8 text-txt-muted mx-auto mb-3" />
-              <p class="text-sm text-txt-muted">Sonuç bulunamadı...</p>
+              <p class="text-sm text-txt-muted">{{ $t('common.noResults') }}</p>
             </div>
           </div>
 
           <footer class="px-4 py-3 border-t border-line bg-side/20 flex items-center justify-between text-txt-muted">
             <div class="flex gap-4">
               <div class="flex items-center gap-1.5 uppercase font-bold text-[10px]">
-                <kbd class="px-1.5 py-0.5 bg-card border border-line rounded">↓↑</kbd> Gezgin
+                <kbd class="px-1.5 py-0.5 bg-card border border-line rounded">↓↑</kbd> {{ $t('common.navigate') }}
               </div>
             </div>
-            <span class="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Proteus Search</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">{{ $t('commandPalette.proteusSearch') }}</span>
           </footer>
         </div>
       </div>
@@ -54,24 +54,26 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { Search, SearchX, ChevronRight, User, Package, Settings, LayoutDashboard } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps({ open: { type: Boolean, default: false } });
 const emit = defineEmits(['update:open']);
 const router = useRouter();
+const { t: $t } = useI18n();
 const query = ref('');
 const selectedIndex = ref(0);
 const searchInput = ref(null);
 
-const staticActions = [
-  { id: 'dash', name: 'Kontrol Paneli', desc: 'Sistem özetini görüntüle', icon: LayoutDashboard, category: 'Navigasyon', link: '/' },
-  { id: 'ord', name: 'Siparişler', desc: 'Tüm siparişleri yönet', icon: Package, category: 'Navigasyon', link: '/orders' },
-  { id: 'prof', name: 'Profil Ayarları', desc: 'Hesabını düzenle', icon: User, category: 'Hesap', link: '/profile' },
-  { id: 'sett', name: 'Sistem Ayarları', desc: 'Platformu yapılandır', icon: Settings, category: 'Hesap', link: '/settings' },
-];
+const staticActions = computed(() => [
+  { id: 'dash', name: $t('commandPalette.controlPanel'), desc: $t('commandPalette.viewSystemSummary'), icon: LayoutDashboard, category: $t('commandPalette.navigation'), link: '/' },
+  { id: 'ord', name: $t('commandPalette.orders'), desc: $t('commandPalette.manageAllOrders'), icon: Package, category: $t('commandPalette.navigation'), link: '/orders' },
+  { id: 'prof', name: $t('commandPalette.profileSettings'), desc: $t('commandPalette.editAccount'), icon: User, category: $t('commandPalette.account'), link: '/profile' },
+  { id: 'sett', name: $t('commandPalette.systemSettings'), desc: $t('commandPalette.configurePlatform'), icon: Settings, category: $t('commandPalette.account'), link: '/settings' },
+]);
 
 const filteredResults = computed(() => {
   const q = query.value.toLowerCase();
-  const items = staticActions.filter(i => i.name.toLowerCase().includes(q) || i.desc.toLowerCase().includes(q));
+  const items = staticActions.value.filter(i => i.name.toLowerCase().includes(q) || i.desc.toLowerCase().includes(q));
   const groups = {};
   let counter = 0;
   items.forEach(item => {

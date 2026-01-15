@@ -5,10 +5,10 @@
                 <div class="max-w-md w-full space-y-8">
                     <div class="text-center space-y-2">
                         <h1 class="text-2xl lg:text-3xl font-bold text-txt-main tracking-tight">
-                            Hoş geldin, {{ userName }}.
+                            {{ $t('onboarding.welcomeMessage', { name: userName }) }}
                         </h1>
                         <p class="text-txt-muted text-sm">
-                            Başlamak için yeni bir organizasyon oluşturun.
+                            {{ $t('onboarding.getStartedMessage') }}
                         </p>
                     </div>
 
@@ -18,11 +18,11 @@
                         </div>
                         <div class="flex-1">
                             <div class="flex items-center justify-between">
-                                <h3 class="text-base font-bold text-txt-main">Yeni Organizasyon Kur</h3>
+                                <h3 class="text-base font-bold text-txt-main">{{ $t('onboarding.createOrganization') }}</h3>
                                 <ArrowRight class="w-4 h-4 text-txt-muted group-hover:text-txt-main group-hover:translate-x-1 transition-all" />
                             </div>
                             <p class="text-xs text-txt-muted mt-1.5 leading-relaxed pr-4">
-                                Kendi çalışma alanınızı oluşturun, ekip arkadaşlarınızı davet edin ve hemen çalışmaya başlayın.
+                                {{ $t('onboarding.createOrganizationDescription') }}
                             </p>
                         </div>
                     </button>
@@ -35,8 +35,8 @@
 
                     <div class="text-center bg-side/30 p-4 rounded-xl border border-dashed border-line">
                         <p class="text-xs text-txt-muted">
-                            Bir davet mi bekliyorsunuz? <br>
-                            <span class="opacity-70">Yöneticinizden size davet e-postası göndermesini isteyin.</span>
+                            {{ $t('onboarding.waitingForInvite') }} <br>
+                            <span class="opacity-70">{{ $t('onboarding.waitingForInviteDescription') }}</span>
                         </p>
                     </div>
                 </div>
@@ -50,11 +50,13 @@ import { computed } from 'vue';
 import { Plus, ArrowRight, } from 'lucide-vue-next';
 import { useSidebarStore } from '@/stores/sidebar';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n';
 
 const sidebarStore = useSidebarStore();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
-const userName = computed(() => authStore.user?.firstName || 'Kullanıcı');
+const userName = computed(() => authStore.user?.firstName || t('common.user'));
 
 const openCreateModal = () => {
     sidebarStore.isTenantModalOpen = true;

@@ -29,7 +29,7 @@
 
                 <button type="submit" :disabled="isLoading" class="w-full bg-txt-main text-main py-3 rounded-xl font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
                     <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin" />
-                    <span>{{ isLoading ? 'Giriş Yapılıyor...' : $t('auth.signIn') }}</span>
+                    <span>{{ isLoading ? $t('auth.signingIn') : $t('auth.signIn') }}</span>
                 </button>
             </form>
 
@@ -53,40 +53,41 @@
                 <component :is="themeStore.isDark ? Sun : Moon" class="w-4 h-4" />
             </button>
             <div class="h-3 w-px bg-line"></div>
-            <select :value="locale" @change="changeLanguage" class="bg-transparent text-xs border-none focus:ring-0 cursor-pointer text-txt-muted hover:text-txt-main py-1">
-                <option value="tr">TR</option>
-                <option value="en">EN</option>
+            <select :value="locale" @change="changeLanguage" class="bg-transparent text-xs border-none focus:ring-0 cursor-pointer text-txt-muted hover:text-txt-main py-1 uppercase">
+                <option v-for="lang in supportedLocales" :key="lang" :value="lang">
+                    {{ lang.toUpperCase() }}
+                </option>
             </select>
         </div>
 
-        <AppModal :show="showForgotModal" title="Şifremi Unuttum" size="sm" @close="showForgotModal = false">
+        <AppModal :show="showForgotModal" :title="$t('auth.forgotPasswordTitle')" size="sm" @close="showForgotModal = false">
             <div class="space-y-6">
                 <div class="text-center space-y-2">
                     <div class="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto">
                         <KeyRound class="w-6 h-6" />
                     </div>
                     <p class="text-sm text-txt-muted">
-                        Hesabınıza ait e-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.
+                        {{ $t('auth.forgotPasswordDescription') }}
                     </p>
                 </div>
 
                 <div class="space-y-4">
-                    <AppInput v-model="forgotEmail" label="E-posta Adresi" placeholder="ornek@sirket.com" />
+                    <AppInput v-model="forgotEmail" :label="$t('auth.emailAddress')" placeholder="ornek@sirket.com" />
                     <button @click="handleForgotPassword" :disabled="isSendingReset || !forgotEmail" class="w-full bg-txt-main text-main py-2.5 rounded-xl font-bold text-xs hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
                         <Loader2 v-if="isSendingReset" class="w-3.5 h-3.5 animate-spin" />
-                        {{ isSendingReset ? 'Gönderiliyor...' : 'Sıfırlama Bağlantısı Gönder' }}
+                        {{ isSendingReset ? $t('auth.sending') : $t('auth.sendResetLink') }}
                     </button>
                 </div>
             </div>
         </AppModal>
 
-        <AppModal :show="showVerifyModal" title="İki Aşamalı Doğrulama" size="sm" :closeOnBackdrop="false" @close="showVerifyModal = false">
+        <AppModal :show="showVerifyModal" :title="$t('auth.twoFactorVerification')" size="sm" :closeOnBackdrop="false" @close="showVerifyModal = false">
             <div class="space-y-6 py-2">
                 <div class="text-center space-y-2">
                     <div class="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto">
                         <ShieldCheck class="w-6 h-6" />
                     </div>
-                    <p class="text-sm text-txt-muted">Lütfen authenticator uygulamanızdaki 6 haneli kodu giriniz.</p>
+                    <p class="text-sm text-txt-muted">{{ $t('auth.twoFactorDescription') }}</p>
                 </div>
 
                 <div class="flex justify-center gap-2">
@@ -94,15 +95,15 @@
                 </div>
 
                 <button @click="verifyMfa" :disabled="isVerifying || otpCode.join('').length !== 6" class="w-full bg-txt-main text-main py-2.5 rounded-xl font-bold text-xs hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                    {{ isVerifying ? 'Doğrulanıyor...' : 'Doğrula ve Devam Et' }}
+                    {{ isVerifying ? $t('auth.verifying') : $t('auth.verifyAndContinue') }}
                 </button>
             </div>
         </AppModal>
 
-        <AppModal :show="showSetupModal" title="2FA Kurulumu Gerekli" size="sm" :closeOnBackdrop="false" @close="() => { }">
+        <AppModal :show="showSetupModal" :title="$t('auth.setupRequired')" size="sm" :closeOnBackdrop="false" @close="() => { }">
             <div class="space-y-6 py-2">
                 <div class="text-center space-y-2">
-                    <p class="text-sm text-txt-muted">Hesabınız için iki aşamalı doğrulama zorunludur. Lütfen aşağıdaki QR kodu taratın.</p>
+                    <p class="text-sm text-txt-muted">{{ $t('auth.setupDescription') }}</p>
                 </div>
 
                 <div v-if="setupData" class="flex flex-col items-center gap-4">
@@ -116,38 +117,38 @@
                 </div>
 
                 <div class="space-y-3">
-                    <label class="text-[10px] font-bold text-txt-muted uppercase tracking-widest block text-center">Doğrulama Kodu</label>
+                    <label class="text-[10px] font-bold text-txt-muted uppercase tracking-widest block text-center">{{ $t('auth.verificationCode') }}</label>
                     <div class="flex justify-center gap-2">
                         <input v-model="setupVerifyCode" type="text" maxlength="6" class="w-full text-center text-lg font-bold bg-card border border-line rounded-xl py-2.5 tracking-widest focus:border-txt-main outline-none transition-all text-txt-main tabular-nums" placeholder="000000" />
                     </div>
                     <button @click="completeSetup" :disabled="isVerifying || setupVerifyCode.length !== 6" class="w-full bg-txt-main text-main py-2.5 rounded-xl font-bold text-xs hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                        {{ isVerifying ? 'Doğrulanıyor...' : 'Kurulumu Tamamla' }}
+                        {{ isVerifying ? $t('auth.verifying') : $t('auth.completeSetup') }}
                     </button>
                 </div>
             </div>
         </AppModal>
 
-        <AppModal :show="showForcePasswordChangeModal" title="Şifre Değişikliği Gerekli" size="sm" :closeOnBackdrop="false" @close="() => { }">
+        <AppModal :show="showForcePasswordChangeModal" :title="$t('auth.passwordChangeRequired')" size="sm" :closeOnBackdrop="false" @close="() => { }">
             <div class="space-y-6">
                 <div class="text-center space-y-2">
                     <div class="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto">
                         <KeyRound class="w-6 h-6" />
                     </div>
                     <p class="text-sm text-txt-muted">
-                        Güvenliğiniz için şifrenizi güncellemeniz gerekmektedir.
+                        {{ $t('auth.passwordChangeDescription') }}
                     </p>
                 </div>
 
                 <div class="space-y-4">
                     <div class="space-y-1.5">
-                        <AppInput v-model="newPassword" label="Yeni Şifre" type="password" placeholder="••••••••" />
+                        <AppInput v-model="newPassword" :label="$t('auth.newPassword')" type="password" placeholder="••••••••" />
                         <p class="text-[10px] text-txt-muted">En az 6 karakter olmalıdır.</p>
                     </div>
-                    <AppInput v-model="confirmNewPassword" label="Yeni Şifre (Tekrar)" type="password" placeholder="••••••••" />
+                    <AppInput v-model="confirmNewPassword" :label="$t('auth.newPasswordRepeat')" type="password" placeholder="••••••••" />
 
                     <button @click="handleForcePasswordChange" :disabled="isChangingPassword || !newPassword || !confirmNewPassword" class="w-full bg-txt-main text-main py-2.5 rounded-xl font-bold text-xs hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
                         <Loader2 v-if="isChangingPassword" class="w-3.5 h-3.5 animate-spin" />
-                        {{ isChangingPassword ? 'Güncelleniyor...' : 'Şifreyi Güncelle ve Devam Et' }}
+                        {{ isChangingPassword ? $t('auth.updating') : $t('auth.changePassword') }}
                     </button>
                 </div>
             </div>
@@ -159,6 +160,7 @@
 <script setup>
 import { ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { supportedLocales } from '@/i18n'
 import { useRoute, useRouter } from 'vue-router';
 import { Sun, Moon, Loader2, ShieldCheck, KeyRound } from 'lucide-vue-next';
 import { useThemeStore } from '@/stores/theme';

@@ -8,20 +8,20 @@
             <Settings2 class="w-6 h-6" />
           </div>
           <div>
-            <h1 class="text-xl lg:text-2xl font-bold text-txt-main tracking-tight">Organizasyon Ayarları</h1>
+            <h1 class="text-xl lg:text-2xl font-bold text-txt-main tracking-tight">{{ $t('settings.organizationSettings') }}</h1>
             <p class="text-sm text-txt-muted mt-1 font-medium">
-              {{ authStore.currentTenant?.name }} için yapılandırma.
+              {{ $t('settings.configurationFor', { name: authStore.currentTenant?.name }) }}
             </p>
           </div>
         </div>
 
         <button v-if="activeTab === 'general'" @click="handleUpdateTenant" class="w-full md:w-auto px-8 py-2.5 bg-txt-main text-main rounded-xl text-xs font-bold hover:opacity-90 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer">
           <Loader2 v-if="isSaving" class="w-4 h-4 animate-spin" />
-          {{ isSaving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet' }}
+          {{ isSaving ? $t('settings.saving') : $t('settings.saveChanges') }}
         </button>
 
         <button v-if="activeTab === 'members'" @click="showInviteModal = true" class="w-full md:w-auto px-6 py-2.5 bg-txt-main text-main rounded-xl text-xs font-bold hover:opacity-90 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer">
-          <Plus class="w-4 h-4" /> Yeni Üye Davet Et
+          <Plus class="w-4 h-4" /> {{ $t('settings.inviteNewMember') }}
         </button>
       </header>
 
@@ -38,11 +38,11 @@
 
           <div v-if="activeTab === 'general'" class="space-y-8">
             <section class="space-y-6">
-              <h3 class="text-[11px] font-bold text-txt-muted uppercase tracking-[0.2em] border-l-2 border-txt-main pl-3">Kimlik Bilgileri</h3>
+              <h3 class="text-[11px] font-bold text-txt-muted uppercase tracking-[0.2em] border-l-2 border-txt-main pl-3">{{ $t('settings.identity') }}</h3>
               <div class="grid grid-cols-1 gap-6">
-                <AppInput v-model="generalForm.name" label="Organizasyon Adı" placeholder="Şirketinizin adı" />
+                <AppInput v-model="generalForm.name" :label="$t('settings.organizationName')" :placeholder="$t('settings.companyName')" />
                 <div class="opacity-50 pointer-events-none grayscale">
-                  <AppFileUpload label="Sistem Logosu (Yakında)" :maxSize="2" />
+                  <AppFileUpload :label="$t('settings.systemLogo')" :maxSize="2" />
                 </div>
               </div>
             </section>
@@ -50,8 +50,8 @@
 
           <div v-if="activeTab === 'members'" class="space-y-6">
             <div class="flex items-center justify-between">
-              <h3 class="text-[11px] font-bold text-txt-muted uppercase tracking-[0.2em] border-l-2 border-txt-main pl-3">Ekip Üyeleri</h3>
-              <span class="text-[10px] font-bold text-txt-muted bg-side px-2 py-1 rounded border border-line">{{ members.length }} Kullanıcı</span>
+              <h3 class="text-[11px] font-bold text-txt-muted uppercase tracking-[0.2em] border-l-2 border-txt-main pl-3">{{ $t('settings.teamMembers') }}</h3>
+              <span class="text-[10px] font-bold text-txt-muted bg-side px-2 py-1 rounded border border-line">{{ members.length }} {{ $t('settings.users') }}</span>
             </div>
 
             <div v-if="isLoadingMembers" class="py-12 flex justify-center">
@@ -65,7 +65,7 @@
                   <div>
                     <div class="flex items-center gap-2">
                       <h4 class="text-sm font-bold text-txt-main">{{ member.firstName }} {{ member.lastName }}</h4>
-                      <span v-if="member.id === authStore.user?.id" class="text-[9px] font-bold bg-txt-main/10 text-txt-main px-1.5 py-0.5 rounded uppercase tracking-wider">Siz</span>
+                      <span v-if="member.id === authStore.user?.id" class="text-[9px] font-bold bg-txt-main/10 text-txt-main px-1.5 py-0.5 rounded uppercase tracking-wider">{{ $t('settings.you') }}</span>
                     </div>
                     <p class="text-xs text-txt-muted">{{ member.email }}</p>
                   </div>
@@ -73,11 +73,11 @@
 
                 <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-line/50">
                   <div class="text-right">
-                    <p class="text-[10px] font-bold text-txt-muted uppercase tracking-wider">Katılma Tarihi</p>
+                    <p class="text-[10px] font-bold text-txt-muted uppercase tracking-wider">{{ $t('settings.joinedDate') }}</p>
                     <p class="text-xs font-medium text-txt-main mt-0.5">{{ new Date(member.joined).toLocaleDateString() }}</p>
                   </div>
 
-                  <button v-if="member.id !== authStore.user?.id" @click="handleRemoveUser(member)" class="p-2 text-txt-muted hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer" title="Ekipten Çıkar">
+                  <button v-if="member.id !== authStore.user?.id" @click="handleRemoveUser(member)" class="p-2 text-txt-muted hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer" :title="$t('settings.removeFromTeam')">
                     <Trash2 class="w-4 h-4" />
                   </button>
                   <div v-else class="w-8"></div>
@@ -89,7 +89,7 @@
           <div v-if="activeTab === 'finance'" class="space-y-8">
             <div class="p-8 border border-dashed border-line rounded-2xl text-center text-txt-muted">
               <Wallet2 class="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p class="text-sm">Finansal ayarlar yakında eklenecek.</p>
+              <p class="text-sm">{{ $t('settings.financeComingSoon') }}</p>
             </div>
           </div>
 
@@ -97,39 +97,39 @@
       </div>
     </div>
 
-    <AppModal :show="showInviteModal" title="Yeni Üye Davet Et" size="sm" @close="showInviteModal = false">
+    <AppModal :show="showInviteModal" :title="$t('settings.inviteMember')" size="sm" @close="showInviteModal = false">
       <div class="space-y-5">
         <div class="bg-side/50 p-4 rounded-xl flex items-start gap-3">
           <Info class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
           <p class="text-xs text-txt-muted leading-relaxed">
-            Davet edilen kullanıcıya bir e-posta gönderilecek ve şifresini belirleyerek sisteme katılması istenecektir.
+            {{ $t('settings.inviteDescription') }}
           </p>
         </div>
 
-        <AppInput v-model="inviteForm.email" label="E-posta Adresi" placeholder="ornek@sirket.com" />
+        <AppInput v-model="inviteForm.email" :label="$t('settings.emailAddress')" placeholder="ornek@sirket.com" />
 
-        <AppSelect v-model="inviteForm.role" label="Erişim Yetkisi" :options="roleOptions" :disabled="loadingRoles" :placeholder="loadingRoles ? 'Roller yükleniyor...' : 'Bir rol seçin'" />
+        <AppSelect v-model="inviteForm.role" :label="$t('settings.accessPermission')" :options="roleOptions" :disabled="loadingRoles" :placeholder="loadingRoles ? $t('settings.loadingRoles') : $t('settings.selectRole')" />
       </div>
       <template #footer>
-        <button @click="showInviteModal = false" class="px-4 py-2 text-xs font-bold text-txt-muted hover:text-txt-main transition-colors">Vazgeç</button>
+        <button @click="showInviteModal = false" class="px-4 py-2 text-xs font-bold text-txt-muted hover:text-txt-main transition-colors">{{ $t('common.cancel') }}</button>
         <button @click="handleInviteUser" :disabled="isInviting || !inviteForm.email || !inviteForm.role" class="px-6 py-2 bg-txt-main text-main rounded-lg text-xs font-bold hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
           <Loader2 v-if="isInviting" class="w-3.5 h-3.5 animate-spin" />
-          {{ isInviting ? 'Gönderiliyor...' : 'Davet Gönder' }}
+          {{ isInviting ? $t('settings.sending') : $t('settings.sendInvite') }}
         </button>
       </template>
     </AppModal>
 
-    <AppModal :show="showDeleteModal" title="Kullanıcıyı Çıkar" size="sm" @close="showDeleteModal = false">
+    <AppModal :show="showDeleteModal" :title="$t('settings.removeUser')" size="sm" @close="showDeleteModal = false">
       <div class="text-center py-4">
         <div class="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
           <UserX class="w-6 h-6" />
         </div>
-        <p class="text-sm font-bold text-txt-main">{{ userToDelete?.firstName }} {{ userToDelete?.lastName }} çıkarılacak.</p>
-        <p class="text-xs text-txt-muted mt-2 max-w-[240px] mx-auto">Bu kullanıcının organizasyona erişimi kalıcı olarak kaldırılacaktır. Emin misiniz?</p>
+        <p class="text-sm font-bold text-txt-main">{{ $t('settings.userWillBeRemoved', { firstName: userToDelete?.firstName, lastName: userToDelete?.lastName }) }}</p>
+        <p class="text-xs text-txt-muted mt-2 max-w-[240px] mx-auto">{{ $t('settings.userAccessRemoved') }}</p>
       </div>
       <template #footer>
-        <button @click="showDeleteModal = false" class="px-4 py-2 text-xs font-bold text-txt-muted hover:text-txt-main transition-colors">Vazgeç</button>
-        <button @click="confirmRemoveUser" class="px-6 py-2 bg-rose-500 text-white rounded-lg text-xs font-bold hover:bg-rose-600 transition-colors">Evet, Çıkar</button>
+        <button @click="showDeleteModal = false" class="px-4 py-2 text-xs font-bold text-txt-muted hover:text-txt-main transition-colors">{{ $t('common.cancel') }}</button>
+        <button @click="confirmRemoveUser" class="px-6 py-2 bg-rose-500 text-white rounded-lg text-xs font-bold hover:bg-rose-600 transition-colors">{{ $t('settings.yesRemove') }}</button>
       </template>
     </AppModal>
 
@@ -140,19 +140,21 @@
 import { ref, reactive, watch, onMounted, computed } from 'vue';
 import { Settings2, Building2, Wallet2, ShieldCheck, Loader2, Plus, Trash2, UserX, Info } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n';
 import AppInput from '@/components/forms/AppInput.vue';
 import AppSelect from '@/components/forms/AppSelect.vue';
 import AppFileUpload from '@/components/forms/AppFileUpload.vue';
 import AppModal from '@/components/ui/AppModal.vue';
 
 const authStore = useAuthStore();
+const { t: $t } = useI18n();
 const activeTab = ref('general');
 const isSaving = ref(false);
 
 const settingTabs = [
-  { id: 'general', label: 'Genel', icon: Building2 },
-  { id: 'members', label: 'Üyeler', icon: ShieldCheck },
-  { id: 'finance', label: 'Finans', icon: Wallet2 },
+  { id: 'general', label: $t('settings.general'), icon: Building2 },
+  { id: 'members', label: $t('settings.members'), icon: ShieldCheck },
+  { id: 'finance', label: $t('settings.finance'), icon: Wallet2 },
 ];
 
 const generalForm = reactive({ name: '' });
@@ -192,8 +194,8 @@ const fetchMembers = async () => {
   const result = await authStore.fetchTenantUsers();
   members.value = result.users.map(u => ({
     id: u.id,
-    firstName: u.firstName || 'İsimsiz',
-    lastName: u.lastName || 'Kullanıcı',
+    firstName: u.firstName || $t('settings.unnamed'),
+    lastName: u.lastName || $t('settings.user'),
     email: u.email,
     avatar: u.avatar,
     joined: u.timeJoined

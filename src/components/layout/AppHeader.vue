@@ -25,7 +25,7 @@
         </div>
 
         <div class="flex items-center gap-2 lg:gap-3">
-            <button @click="themeStore.toggleTheme()" class="p-2 hover:bg-side rounded-lg text-txt-muted hover:text-txt-main cursor-pointer transition-colors" :title="themeStore.isDark ? 'Aydınlık Mod' : 'Karanlık Mod'">
+            <button @click="themeStore.toggleTheme()" class="p-2 hover:bg-side rounded-lg text-txt-muted hover:text-txt-main cursor-pointer transition-colors" :title="themeStore.isDark ? $t('header.lightMode') : $t('header.darkMode')">
                 <component :is="themeStore.isDark ? Sun : Moon" class="w-4 h-4" />
             </button>
 
@@ -33,8 +33,9 @@
 
             <div class="relative flex items-center">
                 <select :value="locale" @change="changeLanguage" class="appearance-none bg-transparent text-xs font-bold uppercase border-none focus:ring-0 cursor-pointer text-txt-muted hover:text-txt-main py-1 pl-1 pr-3 outline-none text-center">
-                    <option value="tr">TR</option>
-                    <option value="en">EN</option>
+                    <option v-for="lang in supportedLocales" :key="lang" :value="lang">
+                        {{ lang.toUpperCase() }}
+                    </option>
                 </select>
                 <ChevronDown class="absolute right-0 w-3 h-3 text-txt-muted pointer-events-none opacity-50" />
             </div>
@@ -42,15 +43,15 @@
             <template v-if="!showSidebarToggle">
                 <div class="h-4 w-px bg-line"></div>
 
-                <router-link to="/home" class="p-2 text-txt-muted hover:text-txt-main transition-colors rounded-lg hover:bg-side" title="Ana Sayfa">
+                <router-link to="/home" class="p-2 text-txt-muted hover:text-txt-main transition-colors rounded-lg hover:bg-side" :title="$t('header.home')">
                     <Home class="w-4 h-4" />
                 </router-link>
 
-                <router-link to="/profile" class="p-2 text-txt-muted hover:text-txt-main transition-colors rounded-lg hover:bg-side" title="Profil Ayarları">
+                <router-link to="/profile" class="p-2 text-txt-muted hover:text-txt-main transition-colors rounded-lg hover:bg-side" :title="$t('header.profileSettings')">
                     <User class="w-4 h-4" />
                 </router-link>
 
-                <button @click="handleLogout" class="p-2 text-txt-muted hover:text-rose-500 transition-colors rounded-lg hover:bg-side" title="Oturumu Kapat">
+                <button @click="handleLogout" class="p-2 text-txt-muted hover:text-rose-500 transition-colors rounded-lg hover:bg-side" :title="$t('header.logout')">
                     <LogOut class="w-4 h-4" />
                 </button>
             </template>
@@ -66,6 +67,7 @@ import { useSidebarStore } from '@/stores/sidebar'
 import { useAuthStore } from '@/stores/auth'
 import { Sun, Moon, Menu, ChevronRight, Layers, Home, User, LogOut, ChevronDown } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { supportedLocales } from '@/i18n'
 
 defineProps({
     showSidebarToggle: {

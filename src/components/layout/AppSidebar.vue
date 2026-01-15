@@ -26,7 +26,7 @@
         <template #content="{ close }">
           <div class="space-y-1">
             <div v-if="authStore.availableTenants.length === 0" class="px-2 py-2 text-xs text-txt-muted italic text-center">
-              Henüz bir organizasyonunuz yok.
+              {{ $t('menu.noOrganizations') }}
             </div>
 
             <button v-for="tenant in authStore.availableTenants" :key="tenant.id" @click="handleSwitchTenant(tenant.id); close()" class="w-full flex items-center gap-3 p-2 rounded-lg text-sm transition-all text-left group" :class="authStore.currentTenant?.id === tenant.id ? 'bg-main shadow-sm text-txt-main border border-line/50' : 'hover:bg-side text-txt-muted hover:text-txt-main border border-transparent'">
@@ -44,7 +44,7 @@
             <div class="w-5 h-5 border border-dashed border-txt-muted/40 rounded flex items-center justify-center group-hover:border-txt-main group-hover:bg-txt-main group-hover:text-main transition-all">
               <Plus class="w-3 h-3" />
             </div>
-            <span class="font-medium">Yeni Organizasyon</span>
+            <span class="font-medium">{{ $t('menu.newOrganization') }}</span>
           </button>
         </template>
       </AppDropdown>
@@ -82,9 +82,9 @@
           </div>
 
           <div class="space-y-0.5 mb-2">
-            <button v-for="lang in [{ id: 'en', n: 'English' }, { id: 'tr', n: 'Türkçe' }]" :key="lang.id" @click="setLanguage(lang.id)" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer group" :class="[locale === lang.id ? 'bg-main text-txt-main border border-line/50' : 'text-txt-muted hover:bg-side border border-transparent']">
-              <span>{{ lang.n }}</span>
-              <Check v-if="locale === lang.id" class="w-3.5 h-3.5" />
+            <button v-for="lang in supportedLocales" :key="lang" @click="setLanguage(lang)" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer group" :class="[locale === lang ? 'bg-main text-txt-main border border-line/50' : 'text-txt-muted hover:bg-side border border-transparent']">
+              <span class="capitalize">{{ getLanguageName(lang) }}</span>
+              <Check v-if="locale === lang" class="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -123,6 +123,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { supportedLocales, getLanguageName } from '@/i18n'
 import { useRouter } from 'vue-router';
 import { useSidebarStore } from '@/stores/sidebar';
 import { useThemeStore } from '@/stores/theme';

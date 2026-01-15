@@ -6,7 +6,7 @@
           <Package class="w-4 h-4" />
         </div>
         <div>
-          <h2 class="text-[13px] font-bold text-txt-main uppercase tracking-tight">Sipariş Yönetimi</h2>
+          <h2 class="text-[13px] font-bold text-txt-main uppercase tracking-tight">{{ $t('orders.management') }}</h2>
           <p class="text-[10px] text-txt-muted font-bold tracking-widest uppercase">{{ order.id }}</p>
         </div>
       </div>
@@ -45,9 +45,9 @@
           <table class="w-full text-left text-[13px]">
             <thead class="bg-side/40 text-[10px] font-bold text-txt-muted uppercase border-b border-line">
               <tr>
-                <th class="px-4 py-3">Ürün Tanımı</th>
-                <th class="px-4 py-3 text-center">Adet</th>
-                <th class="px-4 py-3 text-right">Birim Fiyat</th>
+                <th class="px-4 py-3">{{ $t('orders.productDescription') }}</th>
+                <th class="px-4 py-3 text-center">{{ $t('orders.quantity') }}</th>
+                <th class="px-4 py-3 text-right">{{ $t('orders.unitPrice') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-line/30">
@@ -64,10 +64,10 @@
 
     <footer class="p-6 border-t border-line bg-side/5 flex items-center gap-3 shrink-0">
       <button @click="$emit('save', localOrder)" class="flex-1 bg-txt-main text-main py-2.5 rounded-lg text-xs font-bold hover:opacity-90 active:scale-95 transition-all shadow-sm">
-        Değişiklikleri Kaydet
+        {{ $t('orders.saveChanges') }}
       </button>
       <button @click="$emit('close')" class="px-6 py-2.5 border border-line rounded-lg text-xs font-bold text-txt-main hover:bg-side transition-all">
-        İptal
+        {{ $t('common.cancel') }}
       </button>
     </footer>
   </div>
@@ -79,9 +79,11 @@ import { Package, X } from 'lucide-vue-next'
 import AppInput from '@/components/forms/AppInput.vue'
 import AppSelect from '@/components/forms/AppSelect.vue'
 import AppCurrencyInput from '@/components/forms/AppCurrencyInput.vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps(['order'])
 defineEmits(['save', 'close'])
+const { t: $t } = useI18n()
 
 const activeTab = ref('general')
 const localOrder = ref({ ...props.order })
@@ -91,15 +93,15 @@ watch(() => props.order, (val) => {
 }, { immediate: true })
 
 const tabs = [
-  { id: 'general', label: 'Genel Bilgiler' },
-  { id: 'items', label: 'Sipariş Kalemleri' }
+  { id: 'general', label: $t('orders.generalInfo') },
+  { id: 'items', label: $t('orders.orderItems') }
 ]
 
 const formSchema = [
-  { label: 'Müşteri', key: 'customer', type: 'text' },
-  { label: 'Durum', key: 'status', type: 'select', options: ['Completed', 'Pending', 'Canceled'] },
-  { label: 'Ödeme Türü', key: 'payment', type: 'select', options: ['Kredi Kartı', 'Havale', 'Nakit'] },
-  { label: 'Tutar', key: 'price', type: 'currency' },
-  { label: 'Dahili Notlar', key: 'notes', type: 'textarea', fullWidth: true },
+  { label: $t('orders.customer'), key: 'customer', type: 'text' },
+  { label: $t('orders.status'), key: 'status', type: 'select', options: ['Completed', 'Pending', 'Canceled'] },
+  { label: $t('orders.payment'), key: 'payment', type: 'select', options: [$t('orders.paymentTypes.creditCard'), $t('orders.paymentTypes.bankTransfer'), $t('orders.paymentTypes.cash')] },
+  { label: $t('orders.amount'), key: 'price', type: 'currency' },
+  { label: $t('orders.internalNotes'), key: 'notes', type: 'textarea', fullWidth: true },
 ]
 </script>

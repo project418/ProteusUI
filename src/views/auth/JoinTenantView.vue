@@ -10,9 +10,9 @@
             </div>
 
             <div class="space-y-2">
-                <h1 class="text-2xl font-bold text-txt-main tracking-tight">Ekibe Katılın</h1>
+                <h1 class="text-2xl font-bold text-txt-main tracking-tight">{{ $t('auth.joinTeam') }}</h1>
                 <p class="text-sm text-txt-muted max-w-xs mx-auto">
-                    Bir organizasyona katılmak üzeresiniz. İşlemi onaylayarak ekibe dahil olabilirsiniz.
+                    {{ $t('auth.joinTeamDescription') }}
                 </p>
             </div>
 
@@ -21,7 +21,7 @@
                     <Mail class="w-4 h-4 text-txt-muted" />
                 </div>
                 <div class="min-w-0">
-                    <p class="text-[10px] font-bold text-txt-muted uppercase tracking-wider">Davet Edilen Hesap</p>
+                    <p class="text-[10px] font-bold text-txt-muted uppercase tracking-wider">{{ $t('auth.invitedAccount') }}</p>
                     <p class="text-xs font-bold text-txt-main truncate">{{ userEmail }}</p>
                 </div>
             </div>
@@ -29,11 +29,11 @@
             <div class="space-y-3">
                 <button @click="handleAccept" :disabled="isLoading" class="w-full bg-txt-main text-main py-3 rounded-xl font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin" />
-                    <span>{{ isLoading ? 'İşleniyor...' : 'Daveti Kabul Et ve Katıl' }}</span>
+                    <span>{{ isLoading ? $t('auth.processing') : $t('auth.acceptAndJoin') }}</span>
                 </button>
 
                 <button @click="handleReject" class="w-full bg-transparent text-txt-muted py-3 rounded-xl font-bold text-xs hover:text-txt-main transition-colors">
-                    Vazgeç ve Ana Sayfaya Dön
+                    {{ $t('auth.cancelAndGoHome') }}
                 </button>
             </div>
 
@@ -55,12 +55,14 @@ import { useAuthStore } from '@/stores/auth';
 import { useThemeStore } from '@/stores/theme';
 import { Users, Mail, Loader2, Sun, Moon } from 'lucide-vue-next';
 import { useToastStore } from '@/stores/toast';
+import { useI18n } from 'vue-i18n';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
 const toast = useToastStore();
+const { t: $t } = useI18n();
 
 const isLoading = ref(false);
 const token = ref('');
@@ -70,7 +72,7 @@ const userEmail = computed(() => authStore.user?.email || '...');
 onMounted(() => {
     token.value = route.query.token || '';
     if (!token.value) {
-        toast.add('Geçersiz davet bağlantısı.', 'error');
+        toast.add($t('auth.invalidInviteLink'), 'error');
         router.push('/');
     }
 });

@@ -4,11 +4,11 @@
             <div class="inline-flex items-center justify-center w-12 h-12 bg-card border border-line rounded-xl mb-4 shadow-sm">
                 <div class="w-6 h-6 border-2 border-txt-main rounded-full opacity-90"></div>
             </div>
-            <h1 class="text-2xl font-bold text-txt-main tracking-tight">Hesap Oluştur</h1>
+            <h1 class="text-2xl font-bold text-txt-main tracking-tight">{{ $t('auth.createAccount') }}</h1>
             <p class="text-sm text-txt-muted mt-2">
-                Zaten hesabınız var mı?
+                {{ $t('auth.alreadyHaveAccount') }}
                 <router-link to="/login" class="text-txt-main font-semibold hover:underline">
-                    Giriş Yap
+                    {{ $t('auth.register') }}
                 </router-link>
             </p>
         </div>
@@ -17,23 +17,23 @@
             <form @submit.prevent="handleRegister" class="space-y-4">
 
                 <div class="grid grid-cols-2 gap-4">
-                    <AppInput v-model="form.firstName" label="Ad" placeholder="John" :error="v$.firstName.$error ? 'Ad gereklidir' : ''" />
-                    <AppInput v-model="form.lastName" label="Soyad" placeholder="Doe" :error="v$.lastName.$error ? 'Soyad gereklidir' : ''" />
+                    <AppInput v-model="form.firstName" :label="$t('auth.firstName')" placeholder="John" :error="v$.firstName.$error ? $t('forms.validation.firstNameRequired') : ''" />
+                    <AppInput v-model="form.lastName" :label="$t('auth.lastName')" placeholder="Doe" :error="v$.lastName.$error ? $t('forms.validation.lastNameRequired') : ''" />
                 </div>
 
-                <AppInput v-model="form.email" label="E-posta Adresi" type="email" placeholder="name@company.com" :error="v$.email.$error ? 'Geçerli bir e-posta giriniz' : ''" />
+                <AppInput v-model="form.email" :label="$t('auth.emailAddress')" type="email" placeholder="name@company.com" :error="v$.email.$error ? $t('forms.validation.emailInvalid') : ''" />
 
                 <div class="space-y-1.5">
-                    <AppInput v-model="form.password" label="Şifre" type="password" placeholder="••••••••" :error="v$.password.$error ? 'Şifre en az 6 karakter olmalı' : ''" />
+                    <AppInput v-model="form.password" :label="$t('auth.password')" type="password" placeholder="••••••••" :error="v$.password.$error ? $t('forms.validation.passwordMin') : ''" />
                     <p class="text-[10px] text-txt-muted">En az 6 karakter, harf ve rakam içermeli.</p>
                 </div>
 
-                <AppInput v-model="form.confirmPassword" label="Şifre Tekrar" type="password" placeholder="••••••••" :error="v$.confirmPassword.$error ? 'Şifreler eşleşmiyor' : ''" />
+                <AppInput v-model="form.confirmPassword" :label="$t('auth.confirmPassword')" type="password" placeholder="••••••••" :error="v$.confirmPassword.$error ? $t('forms.validation.passwordMismatch') : ''" />
 
                 <div class="pt-2">
                     <button type="submit" :disabled="isLoading" class="w-full bg-txt-main text-main py-3 rounded-xl font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
                         <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin" />
-                        <span>{{ isLoading ? 'Kayıt Yapılıyor...' : 'Ücretsiz Kaydol' }}</span>
+                        <span>{{ isLoading ? $t('auth.registering') : $t('auth.registerFree') }}</span>
                     </button>
                 </div>
             </form>

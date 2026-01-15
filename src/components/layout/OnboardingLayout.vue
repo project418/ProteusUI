@@ -9,10 +9,10 @@
 
                 <div class="relative z-10 max-w-sm mx-auto w-full">
                     <h2 class="text-4xl font-bold text-txt-main tracking-tight leading-[1.1] mb-6">
-                        Yönetimi <br> sadeleştirin.
+                        {{ $t('onboarding.simplifyManagement') }}
                     </h2>
                     <p class="text-sm text-txt-muted leading-relaxed mb-8">
-                        Proteus, karmaşık iş süreçlerinizi tek bir merkezden yönetmeniz için tasarlandı.
+                        {{ $t('onboarding.managementDescription') }}
                     </p>
 
                     <div class="flex gap-4 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">

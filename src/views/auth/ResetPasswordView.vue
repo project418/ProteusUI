@@ -4,34 +4,34 @@
             <div class="inline-flex items-center justify-center w-12 h-12 bg-card border border-line rounded-xl mb-4 shadow-sm">
                 <div class="w-6 h-6 border-2 border-txt-main rounded-full opacity-90"></div>
             </div>
-            <h1 class="text-2xl font-bold text-txt-main tracking-tight">Yeni Şifre Belirle</h1>
+            <h1 class="text-2xl font-bold text-txt-main tracking-tight">{{ $t('auth.resetPasswordTitle') }}</h1>
             <p class="text-sm text-txt-muted mt-2">
-                Lütfen hesabınız için yeni bir şifre giriniz.
+                {{ $t('auth.resetPasswordDescription') }}
             </p>
         </div>
 
         <div class="w-full max-w-[400px] space-y-6">
             <div v-if="!token" class="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-sm text-center font-medium">
-                Hata: Geçersiz veya eksik sıfırlama bağlantısı.
+                {{ $t('auth.invalidResetLink') }}
             </div>
 
             <form v-else @submit.prevent="handleReset" class="space-y-4">
                 <div class="space-y-1.5">
-                    <AppInput v-model="password" label="Yeni Şifre" type="password" placeholder="••••••••" :error="v$.password.$error ? 'Şifre en az 6 karakter olmalıdır' : ''" />
+                    <AppInput v-model="password" :label="$t('auth.newPassword')" type="password" placeholder="••••••••" :error="v$.password.$error ? $t('forms.validation.passwordMin') : ''" />
                     <p class="text-[10px] text-txt-muted">En az 6 karakter, harf ve rakam içermeli.</p>
                 </div>
 
-                <AppInput v-model="confirmPassword" label="Yeni Şifre (Tekrar)" type="password" placeholder="••••••••" :error="v$.confirmPassword.$error ? 'Şifreler eşleşmiyor' : ''" />
+                <AppInput v-model="confirmPassword" :label="$t('auth.newPasswordRepeat')" type="password" placeholder="••••••••" :error="v$.confirmPassword.$error ? $t('forms.validation.passwordMismatch') : ''" />
 
                 <button type="submit" :disabled="isLoading" class="w-full bg-txt-main text-main py-3 rounded-xl font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2">
                     <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin" />
-                    <span>{{ isLoading ? 'Güncelleniyor...' : 'Şifreyi Güncelle' }}</span>
+                    <span>{{ isLoading ? $t('auth.updating') : $t('auth.updatePassword') }}</span>
                 </button>
             </form>
 
             <div class="text-center">
                 <router-link to="/login" class="text-xs font-bold text-txt-muted hover:text-txt-main transition-colors uppercase tracking-widest">
-                    Giriş Sayfasına Dön
+                    {{ $t('auth.backToLogin') }}
                 </router-link>
             </div>
         </div>
