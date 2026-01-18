@@ -127,12 +127,6 @@
                   </div>
                 </div>
 
-                <div class="flex-1 px-8 hidden sm:block">
-                  <p class="text-xs text-txt-muted truncate">
-                    {{ $t('settings.noDescription') }}
-                  </p>
-                </div>
-
                 <div class="flex items-center gap-4">
                   <div v-if="role.name !== 'admin'" class="flex items-center gap-2">
                     <button @click="openEditRoleModal(role)" class="p-2 text-txt-muted hover:text-txt-main hover:bg-side rounded-lg transition-all cursor-pointer opacity-100 sm:opacity-0 group-hover:opacity-100" :title="$t('common.edit')">
@@ -237,7 +231,7 @@ const isSaving = ref(false);
 const settingTabs = [
   { id: 'general', label: $t('settings.general'), icon: Building2 },
   { id: 'members', label: $t('settings.members'), icon: ShieldCheck },
-  { id: 'roles', label: $t('settings.policies'), icon: FileKey }, // Tab ID 'roles' oldu
+  { id: 'roles', label: $t('settings.policies'), icon: FileKey },
   { id: 'finance', label: $t('settings.finance'), icon: Wallet2 },
 ];
 
@@ -281,15 +275,17 @@ const roleOptions = computed(() => {
 const fetchMembers = async () => {
   isLoadingMembers.value = true;
   const result = await authStore.fetchTenantUsers();
+
   members.value = result.users.map(u => ({
     id: u.id,
-    firstName: u.firstName || $t('settings.unnamed'),
-    lastName: u.lastName || $t('settings.user'),
+    firstName: u.profile?.firstName || $t('settings.unnamed'),
+    lastName: u.profile?.lastName || $t('settings.user'),
     email: u.email,
-    avatar: u.avatar,
+    avatar: u.profile?.avatar,
     joined: u.timeJoined,
     role: u.role || ''
   }));
+
   isLoadingMembers.value = false;
 };
 

@@ -277,15 +277,18 @@ const passwordForm = reactive({
 
 watch(() => authStore.user, (newUser) => {
   if (newUser) {
-    profileForm.firstName = newUser.firstName || '';
-    profileForm.lastName = newUser.lastName || '';
     profileForm.email = newUser.email || '';
-    profileForm.phone = newUser.phone || '';
-    profileForm.countryCode = newUser.countryCode || '+90';
-    profileForm.timezone = newUser.timezone || '';
-    profileForm.language = newUser.language || '';
-    profileForm.title = newUser.title || '';
-    profileForm.avatar = newUser.avatar || '';
+
+    if (newUser.profile) {
+      profileForm.firstName = newUser.profile.firstName || '';
+      profileForm.lastName = newUser.profile.lastName || '';
+      profileForm.phone = newUser.profile.phone || '';
+      profileForm.countryCode = newUser.profile.countryCode || '+90';
+      profileForm.timezone = newUser.profile.timezone || '';
+      profileForm.language = newUser.profile.language || '';
+      profileForm.title = newUser.profile.title || '';
+      profileForm.avatar = newUser.profile.avatar || '';
+    }
   }
 }, { immediate: true });
 

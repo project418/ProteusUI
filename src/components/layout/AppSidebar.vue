@@ -153,13 +153,14 @@ const currentTenantColor = computed(() => authStore.currentTenant ? getTenantCol
 // User Computed Properties
 const userEmail = computed(() => authStore.user?.email || 'user@proteus.com');
 const displayName = computed(() => {
-  if (authStore.user?.firstName && authStore.user?.lastName) {
-    return `${authStore.user.firstName} ${authStore.user.lastName}`;
+  if (authStore.user?.profile?.firstName && authStore.user?.profile?.lastName) {
+    return `${authStore.user.profile.firstName} ${authStore.user.profile.lastName}`;
   }
   return authStore.user?.email?.split('@')[0] || 'Kullanıcı';
 });
+
 const displayAvatar = computed(() => {
-  if (authStore.user?.avatar) return authStore.user.avatar;
+  if (authStore.user?.profile?.avatar) return authStore.user.profile.avatar;
   return `https://ui-avatars.com/api/?name=${displayName.value}&background=333&color=fff`;
 });
 

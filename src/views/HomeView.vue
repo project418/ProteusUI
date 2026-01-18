@@ -34,5 +34,5 @@ import { useI18n } from 'vue-i18n';
 const authStore = useAuthStore();
 const { t: $t } = useI18n();
 
-const userName = computed(() => authStore.user?.firstName || 'User');
+const userName = computed(() => authStore.user?.profile?.firstName || 'User');
 </script>

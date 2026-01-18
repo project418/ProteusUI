@@ -22,18 +22,21 @@ const LOGIN_MUTATION = gql`
         user {
           id
           email
-          firstName
-          lastName
-          title
-          phone
-          countryCode
-          timezone
-          language
-          avatar
+          profile {
+            firstName
+            lastName
+            title
+            phone
+            countryCode
+            timezone
+            language
+            avatar
+          }
         }
         tenant {
           id
           name
+          createdAt
         }
         availableTenants {
           id
@@ -53,8 +56,10 @@ const REGISTER_MUTATION = gql`
         user {
           id
           email
-          firstName
-          lastName
+          profile {
+            firstName
+            lastName
+          }
         }
       }
     }
@@ -67,6 +72,7 @@ const CREATE_TENANT_MUTATION = gql`
       createOwnTenant(name: $name) {
         id
         name
+        createdAt
       }
     }
   }
@@ -78,6 +84,7 @@ const UPDATE_TENANT_MUTATION = gql`
       updateTenant(name: $name) {
         id
         name
+        updatedAt
       }
     }
   }
@@ -90,11 +97,13 @@ const GET_TENANT_USERS_QUERY = gql`
         users {
           id
           email
-          firstName
-          lastName
-          avatar
           timeJoined
           role
+          profile {
+            firstName
+            lastName
+            avatar
+          }
         }
         nextPaginationToken
       }
@@ -160,14 +169,16 @@ const UPDATE_ME_MUTATION = gql`
         user {
           id
           email
-          firstName
-          lastName
-          title
-          phone
-          countryCode
-          timezone
-          language
-          avatar
+          profile {
+            firstName
+            lastName
+            title
+            phone
+            countryCode
+            timezone
+            language
+            avatar
+          }
         }
         accessToken
         refreshToken
@@ -237,19 +248,22 @@ const ME_QUERY = gql`
       me {
         id
         email
-        firstName
-        lastName
-        title
-        phone
-        countryCode
-        timezone
-        language
-        avatar
+        profile {
+          firstName
+          lastName
+          title
+          phone
+          countryCode
+          timezone
+          language
+          avatar
+        }
       }
       myPermissions
       myTenants {
         id
         name
+        createdAt
       }
     }
   }
@@ -300,7 +314,6 @@ export const useAuthStore = defineStore('auth', () => {
   const toast = useToastStore()
 
   // --- STATE ---
-  // Initialize state from AuthStorage to persist session across reloads
   const user = ref(null)
   const token = ref(AuthStorage.getToken() || null)
 
@@ -357,7 +370,7 @@ export const useAuthStore = defineStore('auth', () => {
         clearActiveTenant()
       }
 
-      // MFA Handling - Prioritize MFA check over Password Change
+      // MFA Handling
       if (result.requiresMfa) {
         isMfaRequired.value = true
         isMfaVerified.value = false
@@ -371,7 +384,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
       }
 
-      // Password Change Enforcement - Check after MFA checks are passed (or not required)
       if (requiresPasswordChange.value) {
         toast.add('Güvenliğiniz için şifrenizi değiştirmeniz gerekmektedir.', 'warning')
         return { success: true, status: 'PASSWORD_CHANGE_REQUIRED' }
@@ -425,7 +437,6 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error) {
       console.warn('Logout error', error)
     } finally {
-      // Reset local state
       user.value = null
       token.value = null
 
@@ -439,10 +450,8 @@ export const useAuthStore = defineStore('auth', () => {
       totpDevices.value = []
       hasMfaEnabledState.value = false
 
-      // Clear storage
       AuthStorage.clearSession()
 
-      // Reset Apollo Store
       try {
         await apolloClient.resetStore()
       } catch {
@@ -758,7 +767,6 @@ export const useAuthStore = defineStore('auth', () => {
 
         fetchTotpDevices()
 
-        // Check password change AFTER MFA verification
         if (requiresPasswordChange.value) {
           toast.add('Güvenliğiniz için şifrenizi değiştirmeniz gerekmektedir.', 'warning')
           return { success: true, status: 'PASSWORD_CHANGE_REQUIRED' }
@@ -811,7 +819,6 @@ export const useAuthStore = defineStore('auth', () => {
 
         await fetchTotpDevices()
 
-        // Check password change AFTER TOTP Setup/Verify
         if (requiresPasswordChange.value) {
           toast.add('Güvenliğiniz için şifrenizi değiştirmeniz gerekmektedir.', 'warning')
           return { success: true, status: 'PASSWORD_CHANGE_REQUIRED' }
@@ -927,8 +934,6 @@ export const useAuthStore = defineStore('auth', () => {
   function clearActiveTenant() {
     currentTenant.value = null
     tenantId.value = null
-    // We rely on AuthStorage.clearSession() during logout,
-    // but explicit removal is possible if needed for tenant context switching only.
     localStorage.removeItem('proteus_tenant_id')
     localStorage.removeItem('proteus_current_tenant')
   }

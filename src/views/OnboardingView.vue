@@ -56,7 +56,7 @@ const sidebarStore = useSidebarStore();
 const authStore = useAuthStore();
 const { t } = useI18n();
 
-const userName = computed(() => authStore.user?.firstName || t('common.user'));
+const userName = computed(() => authStore.user?.profile?.firstName || t('common.user'));
 
 const openCreateModal = () => {
     sidebarStore.isTenantModalOpen = true;
