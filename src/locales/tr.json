@@ -249,6 +249,8 @@
     "general": "Genel",
     "members": "Üyeler",
     "finance": "Finans",
+    "policies": "Roller ve İzinler",
+    "createRole": "Yeni Rol Oluştur",
     "identity": "Kimlik Bilgileri",
     "organizationName": "Organizasyon Adı",
     "companyName": "Şirketinizin adı",
@@ -272,7 +274,12 @@
     "userAccessRemoved": "Bu kullanıcının organizasyona erişimi kalıcı olarak kaldırılacaktır. Emin misiniz?",
     "yesRemove": "Evet, Çıkar",
     "unnamed": "İsimsiz",
-    "user": "Kullanıcı"
+    "roleName": "Rol Adı",
+    "description": "Açıklama",
+    "deleteRole": "Rolü Sil",
+    "roleWillBeDeleted": "\"{name}\" rolü silinecek.",
+    "roleDeleteWarning": "Bu işlem geri alınamaz. Bu role sahip kullanıcılar erişimlerini kaybedebilir.",
+    "systemRoleCannotBeDeleted": "Sistem rolleri silinemez."
   },
   "commandPalette": {
     "search": "Ara...",

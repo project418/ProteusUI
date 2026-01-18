@@ -94,6 +94,7 @@ const GET_TENANT_USERS_QUERY = gql`
           lastName
           avatar
           timeJoined
+          role
         }
         nextPaginationToken
       }
@@ -125,14 +126,12 @@ const ACCEPT_INVITE_MUTATION = gql`
   }
 `
 
-const LIST_POLICIES_QUERY = gql`
-  query ListPolicies {
+const LIST_ROLES_QUERY = gql`
+  query ListRoles {
     auth {
-      listPolicies {
+      listRoles {
         name
-        policy {
-          description
-        }
+        permissions
       }
     }
   }
@@ -260,6 +259,38 @@ const LOGOUT_MUTATION = gql`
   mutation Logout {
     auth {
       logout
+    }
+  }
+`
+
+const CREATE_ROLE_MUTATION = gql`
+  mutation CreateRole($roleName: String!, $permissions: [String]!) {
+    auth {
+      createRole(roleName: $roleName, permissions: $permissions)
+    }
+  }
+`
+
+const UPDATE_ROLE_MUTATION = gql`
+  mutation UpdateRole($roleName: String!, $permissions: [String]!) {
+    auth {
+      updateRole(roleName: $roleName, permissions: $permissions)
+    }
+  }
+`
+
+const DELETE_ROLE_MUTATION = gql`
+  mutation DeleteRole($roleName: String!) {
+    auth {
+      deleteRole(roleName: $roleName)
+    }
+  }
+`
+
+const ASSIGN_ROLE_MUTATION = gql`
+  mutation AssignRole($userId: String!, $roleName: String!) {
+    auth {
+      assignRole(userId: $userId, roleName: $roleName)
     }
   }
 `
@@ -527,11 +558,11 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchRoles() {
     try {
       const { data } = await apolloClient.query({
-        query: LIST_POLICIES_QUERY,
+        query: LIST_ROLES_QUERY,
         fetchPolicy: 'network-only'
       })
 
-      roles.value = data.auth.listPolicies || []
+      roles.value = data.auth.listRoles || []
       return roles.value
     } catch (error) {
       console.error('Fetch roles error:', error)
@@ -572,6 +603,67 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error) {
       console.error('Accept invite error:', error)
       toast.add(error.message || 'Davet kabul edilemedi.', 'error')
+      return false
+    }
+  }
+
+  async function createRole(roleName, permissions) {
+    try {
+      await apolloClient.mutate({
+        mutation: CREATE_ROLE_MUTATION,
+        variables: { roleName, permissions }
+      })
+      toast.add('Rol başarıyla oluşturuldu.', 'success')
+      await fetchRoles()
+      return true
+    } catch (error) {
+      toast.add(error.message || 'Rol oluşturulamadı.', 'error')
+      return false
+    }
+  }
+
+  async function updateRole(roleName, permissions) {
+    try {
+      await apolloClient.mutate({
+        mutation: UPDATE_ROLE_MUTATION,
+        variables: { roleName, permissions }
+      })
+      toast.add('Rol güncellendi.', 'success')
+      await fetchRoles()
+      return true
+    } catch (error) {
+      toast.add(error.message || 'Güncelleme başarısız.', 'error')
+      return false
+    }
+  }
+
+  async function deleteRole(roleName) {
+    try {
+      await apolloClient.mutate({
+        mutation: DELETE_ROLE_MUTATION,
+        variables: { roleName }
+      })
+      toast.add('Rol silindi.', 'success')
+      roles.value = roles.value.filter(r => r.name !== roleName)
+      return true
+    } catch (error) {
+      toast.add(error.message || 'Silme başarısız.', 'error')
+      return false
+    }
+  }
+
+  async function assignRole(userId, roleName) {
+    try {
+      await apolloClient.mutate({
+        mutation: ASSIGN_ROLE_MUTATION,
+        variables: { userId, roleName }
+      })
+
+      toast.add('Kullanıcı rolü güncellendi.', 'success')
+      return true
+    } catch (error) {
+      console.error('Assign role error:', error)
+      toast.add(error.message || 'Rol atama işlemi başarısız.', 'error')
       return false
     }
   }
@@ -873,6 +965,10 @@ export const useAuthStore = defineStore('auth', () => {
     fetchRoles,
     inviteUser,
     acceptInvite,
+    createRole,
+    updateRole,
+    deleteRole,
+    assignRole,
 
     // Profile & Security
     sendPasswordResetEmail,
