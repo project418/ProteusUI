@@ -50,13 +50,11 @@ import { computed } from 'vue';
 import { Plus, ArrowRight, } from 'lucide-vue-next';
 import { useSidebarStore } from '@/stores/sidebar';
 import { useAuthStore } from '@/stores/auth';
-import { useI18n } from 'vue-i18n';
 
 const sidebarStore = useSidebarStore();
 const authStore = useAuthStore();
-const { t } = useI18n();
 
-const userName = computed(() => authStore.user?.profile?.firstName || t('common.user'));
+const userName = computed(() => authStore.currentUser.firstName || authStore.currentUser.fullName);
 
 const openCreateModal = () => {
     sidebarStore.isTenantModalOpen = true;

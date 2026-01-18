@@ -336,6 +336,36 @@ export const useAuthStore = defineStore('auth', () => {
   const hasMfaEnabled = computed(() => hasMfaEnabledState.value)
   const hasTenant = computed(() => !!tenantId.value)
 
+  const currentUser = computed(() => {
+    const u = user.value || {}
+    const p = u.profile || {}
+
+    const deriveName = () => {
+      if (p.firstName && p.lastName) return `${p.firstName} ${p.lastName}`
+      if (p.firstName) return p.firstName
+      if (u.email) return u.email.split('@')[0]
+      return 'User'
+    }
+
+    const derivedName = deriveName()
+
+    return {
+      id: u.id || '',
+      email: u.email || '',
+      firstName: p.firstName || '',
+      lastName: p.lastName || '',
+      title: p.title || '',
+      phone: p.phone || '',
+      countryCode: p.countryCode || '+90',
+      timezone: p.timezone || 'Europe/Istanbul',
+      language: p.language || 'tr',
+
+      fullName: derivedName,
+      avatar: p.avatar || `https://ui-avatars.com/api/?name=${derivedName}&background=random`
+    }
+  })
+
+
   // --- ACTIONS ---
 
   // 1. Authentication
@@ -956,6 +986,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     hasMfaEnabled,
     hasTenant,
+    currentUser,
 
     // Actions
     login,

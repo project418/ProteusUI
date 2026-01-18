@@ -6,7 +6,7 @@
         <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6">
           <div class="relative group">
             <div class="w-24 h-24 rounded-2xl bg-side border-2 border-line flex items-center justify-center overflow-hidden shadow-xl">
-              <img :src="displayAvatar" class="w-full h-full object-cover" />
+              <img :src="authStore.currentUser.avatar" class="w-full h-full object-cover" />
               <div v-if="isAvatarUploading" class="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
                 <Loader2 class="w-8 h-8 text-white animate-spin" />
               </div>
@@ -21,11 +21,11 @@
             </button>
           </div>
           <div>
-            <h1 class="text-2xl font-bold text-txt-main tracking-tight">{{ displayName }}</h1>
+            <h1 class="text-2xl font-bold text-txt-main tracking-tight">{{ authStore.currentUser.fullName }}</h1>
             <p class="text-sm text-txt-muted font-medium uppercase tracking-wider mt-1">
-              {{ profileForm.title || $t('profile.noTitle') }}
+              {{ authStore.currentUser.title }}
             </p>
-            <p class="text-xs text-txt-muted mt-1">{{ authStore.user?.email }}</p>
+            <p class="text-xs text-txt-muted mt-1">{{ authStore.currentUser.email }}</p>
           </div>
         </div>
       </header>
@@ -227,7 +227,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import { User, Camera, ShieldCheck, Plus, X, Trash2, RefreshCw, Loader2, Info } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
@@ -275,34 +275,17 @@ const passwordForm = reactive({
   newPassword: ''
 });
 
-watch(() => authStore.user, (newUser) => {
-  if (newUser) {
-    profileForm.email = newUser.email || '';
-
-    if (newUser.profile) {
-      profileForm.firstName = newUser.profile.firstName || '';
-      profileForm.lastName = newUser.profile.lastName || '';
-      profileForm.phone = newUser.profile.phone || '';
-      profileForm.countryCode = newUser.profile.countryCode || '+90';
-      profileForm.timezone = newUser.profile.timezone || '';
-      profileForm.language = newUser.profile.language || '';
-      profileForm.title = newUser.profile.title || '';
-      profileForm.avatar = newUser.profile.avatar || '';
-    }
-  }
-}, { immediate: true });
-
-const displayName = computed(() => {
-  if (profileForm.firstName && profileForm.lastName) {
-    return `${profileForm.firstName} ${profileForm.lastName}`;
-  }
-  return authStore.user?.email?.split('@')[0] || 'Kullanıcı';
-});
-
-const displayAvatar = computed(() => {
-  if (profileForm.avatar) return profileForm.avatar;
-  return `https://ui-avatars.com/api/?name=${displayName.value}&background=333&color=fff`;
-});
+watch(() => authStore.currentUser, (user) => {
+  profileForm.email = user.email
+  profileForm.firstName = user.firstName
+  profileForm.lastName = user.lastName
+  profileForm.phone = user.phone
+  profileForm.countryCode = user.countryCode
+  profileForm.timezone = user.timezone
+  profileForm.language = user.language
+  profileForm.title = user.title
+  profileForm.avatar = user.avatar
+}, { immediate: true })
 
 const showAvatarModal = ref(false);
 const showDeleteAvatarModal = ref(false);

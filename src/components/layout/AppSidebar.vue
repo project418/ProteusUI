@@ -151,18 +151,9 @@ const currentTenantInitials = computed(() => getInitials(currentTenantName.value
 const currentTenantColor = computed(() => authStore.currentTenant ? getTenantColor(authStore.currentTenant.name) : 'bg-gray-500');
 
 // User Computed Properties
-const userEmail = computed(() => authStore.user?.email || 'user@proteus.com');
-const displayName = computed(() => {
-  if (authStore.user?.profile?.firstName && authStore.user?.profile?.lastName) {
-    return `${authStore.user.profile.firstName} ${authStore.user.profile.lastName}`;
-  }
-  return authStore.user?.email?.split('@')[0] || 'Kullanıcı';
-});
-
-const displayAvatar = computed(() => {
-  if (authStore.user?.profile?.avatar) return authStore.user.profile.avatar;
-  return `https://ui-avatars.com/api/?name=${displayName.value}&background=333&color=fff`;
-});
+const userEmail = computed(() => authStore.currentUser.email);
+const displayName = computed(() => authStore.currentUser.fullName);
+const displayAvatar = computed(() => authStore.currentUser.avatar);
 
 // Helpers
 const getInitials = (name) => {
