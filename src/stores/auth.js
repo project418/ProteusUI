@@ -433,9 +433,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       const newTenant = data.auth.createOwnTenant
 
-      availableTenants.value.push(newTenant)
-      AuthStorage.setAvailableTenants(availableTenants.value)
-
+      availableTenants.value = [...availableTenants.value, newTenant]
       await switchTenant(newTenant.id)
 
       toast.add('Çalışma alanı başarıyla oluşturuldu.', 'success')
